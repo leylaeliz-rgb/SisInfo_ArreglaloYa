@@ -1,0 +1,21 @@
+# Dependencias
+**/node_modules/
+
+# Archivos compilados
+**/dist/
+**/build/
+**/coverage/
+
+# Archivos temporales de TypeScript
+**/*.tsbuildinfo
+
+# Variables de entorno
+**/.env
+**/.env.*
+!**/.env.example
+
+# Logs
+*.log
+
+# Archivos temporales de Windows
+Thumbs.db
