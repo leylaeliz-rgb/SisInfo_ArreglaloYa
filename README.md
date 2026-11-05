@@ -1,4 +1,6 @@
  #SisInfo_ArreglaloYa
+ ##
+ 
 1.- Instalar Visual Code con las siguientes extensiones:
     Angular Language Service
     ESLint
