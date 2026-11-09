@@ -4,10 +4,20 @@ import { AdministracionController } from './api/administracion.controller';
 import { AdministracionTypeOrmRepository } from './infrastructure/consulta.typeorm-repository';
 import { ConsultarAdministracionService } from './services/consultar.service';
 
+import { OperacionesAdministracionController } from './api/operaciones.controller';
+import { OperacionesAdministracionTypeOrmRepository } from './infrastructure/operaciones.repository';
+import { OperacionesAdministracionService } from './services/operaciones.service';
+
 @Module({
   imports: [AuthModule],
-  controllers: [AdministracionController],
+  controllers: [OperacionesAdministracionController, AdministracionController],
   providers: [
+    OperacionesAdministracionTypeOrmRepository,
+    {
+      provide: OperacionesAdministracionService,
+      inject: [OperacionesAdministracionTypeOrmRepository],
+      useFactory: (repo: OperacionesAdministracionTypeOrmRepository) => new OperacionesAdministracionService(repo),
+    },
     AdministracionTypeOrmRepository,
     {
       provide: ConsultarAdministracionService,

@@ -4,10 +4,20 @@ import { VerificacionesController } from './api/verificaciones.controller';
 import { VerificacionesTypeOrmRepository } from './infrastructure/consulta.typeorm-repository';
 import { ConsultarVerificacionesService } from './services/consultar.service';
 
+import { OperacionesVerificacionesController } from './api/operaciones.controller';
+import { OperacionesVerificacionesTypeOrmRepository } from './infrastructure/operaciones.repository';
+import { OperacionesVerificacionesService } from './services/operaciones.service';
+
 @Module({
   imports: [AuthModule],
-  controllers: [VerificacionesController],
+  controllers: [OperacionesVerificacionesController, VerificacionesController],
   providers: [
+    OperacionesVerificacionesTypeOrmRepository,
+    {
+      provide: OperacionesVerificacionesService,
+      inject: [OperacionesVerificacionesTypeOrmRepository],
+      useFactory: (repo: OperacionesVerificacionesTypeOrmRepository) => new OperacionesVerificacionesService(repo),
+    },
     VerificacionesTypeOrmRepository,
     {
       provide: ConsultarVerificacionesService,

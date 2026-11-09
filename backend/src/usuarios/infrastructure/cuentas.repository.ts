@@ -32,14 +32,15 @@ export class CuentasTypeOrmRepository implements CuentasRepository {
           'INSERT INTO usuarios (nombre_completo, telefono, password_hash) VALUES ($1, $2, $3) RETURNING id',
           [nombre, telefono, hash],
         );
+        const codigos = rol === 'trabajador' ? ['CLIENTE', 'TRABAJADOR'] : ['CLIENTE'];
         const asignados = await tx.query(
-          'INSERT INTO usuario_roles (usuario_id, rol_id) SELECT $1, id FROM roles WHERE codigo = $2 RETURNING rol_id',
-          [id, rol.toUpperCase()],
+          'INSERT INTO usuario_roles (usuario_id, rol_id) SELECT $1, id FROM roles WHERE codigo = ANY($2::text[]) RETURNING rol_id',
+          [id, codigos],
         );
-        if (asignados.length !== 1) {
+        if (asignados.length !== codigos.length) {
           throw new Error('Falta cargar el rol de registro.');
         }
-        return { id, nombreCompleto: nombre, telefono, roles: [rol] };
+        return { id, nombreCompleto: nombre, telefono, roles: codigos.map((codigo) => codigo.toLowerCase()) };
       });
     } catch (error) {
       if (error instanceof QueryFailedError && error.driverError.constraint === 'usuarios_telefono_key') {

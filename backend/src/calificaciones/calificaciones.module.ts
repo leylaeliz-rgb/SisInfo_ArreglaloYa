@@ -4,10 +4,20 @@ import { CalificacionesController } from './api/calificaciones.controller';
 import { CalificacionesTypeOrmRepository } from './infrastructure/consulta.typeorm-repository';
 import { ConsultarCalificacionesService } from './services/consultar.service';
 
+import { OperacionesCalificacionesController } from './api/operaciones.controller';
+import { OperacionesCalificacionesTypeOrmRepository } from './infrastructure/operaciones.repository';
+import { OperacionesCalificacionesService } from './services/operaciones.service';
+
 @Module({
   imports: [AuthModule],
-  controllers: [CalificacionesController],
+  controllers: [OperacionesCalificacionesController, CalificacionesController],
   providers: [
+    OperacionesCalificacionesTypeOrmRepository,
+    {
+      provide: OperacionesCalificacionesService,
+      inject: [OperacionesCalificacionesTypeOrmRepository],
+      useFactory: (repo: OperacionesCalificacionesTypeOrmRepository) => new OperacionesCalificacionesService(repo),
+    },
     CalificacionesTypeOrmRepository,
     {
       provide: ConsultarCalificacionesService,
