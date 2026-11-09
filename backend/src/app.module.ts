@@ -5,6 +5,18 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { TrabajadoresModule } from './trabajadores/trabajadores.module';
+import { AuthModule } from './auth/auth.module';
+import { UsuariosModule } from './usuarios/usuarios.module';
+import { CatalogosModule } from './catalogos/catalogos.module';
+import { VerificacionesModule } from './verificaciones/verificaciones.module';
+import { SolicitudesModule } from './solicitudes/solicitudes.module';
+import { CotizacionesModule } from './cotizaciones/cotizaciones.module';
+import { ServiciosModule } from './servicios/servicios.module';
+import { PagosModule } from './pagos/pagos.module';
+import { CalificacionesModule } from './calificaciones/calificaciones.module';
+import { ReclamosModule } from './reclamos/reclamos.module';
+import { AdministracionModule } from './administracion/administracion.module';
 
 @Module({
   imports: [
@@ -33,6 +45,18 @@ import { AppService } from './app.service';
         synchronize: false,
       }),
     }),
+    AuthModule,
+    UsuariosModule,
+    CatalogosModule,
+    VerificacionesModule,
+    SolicitudesModule,
+    CotizacionesModule,
+    ServiciosModule,
+    PagosModule,
+    CalificacionesModule,
+    ReclamosModule,
+    AdministracionModule,
+    TrabajadoresModule,
   ],
 
   controllers: [AppController],
