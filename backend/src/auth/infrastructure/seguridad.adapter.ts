@@ -1,9 +1,9 @@
 import { Injectable, ServiceUnavailableException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { randomBytes, scrypt, timingSafeEqual } from 'node:crypto';
+import { randomBytes, randomUUID, scrypt, timingSafeEqual } from 'node:crypto';
 import { promisify } from 'node:util';
 import { sign, verify } from 'jsonwebtoken';
-import { Seguridad } from '../core/seguridad';
+import { Identidad, Seguridad } from '../core/seguridad';
 
 const derivar = promisify(scrypt);
 const opciones = { issuer: 'arreglalo-ya', audience: 'arreglalo-ya-api' };
@@ -25,9 +25,10 @@ export class SeguridadAdapter implements Seguridad {
     return timingSafeEqual(clave, Buffer.from(partes[2], 'hex'));
   }
 
-  emitir(sub: string, rolActivo: string) {
-    return sign({ rolActivo }, this.secreto(), {
-      ...opciones, subject: sub, algorithm: 'HS256', expiresIn: '15m',
+  emitir(sub: string, rolActivo: string, sesion?: Pick<Identidad, 'sesionId' | 'expiraEn'>) {
+    const exp = sesion?.expiraEn ?? Math.floor(Date.now() / 1000) + 900;
+    return sign({ rolActivo, exp }, this.secreto(), {
+      ...opciones, subject: sub, algorithm: 'HS256', jwtid: sesion?.sesionId ?? randomUUID(),
     });
   }
 
@@ -35,10 +36,10 @@ export class SeguridadAdapter implements Seguridad {
     const secreto = this.secreto();
     try {
       const datos = verify(token, secreto, { ...opciones, algorithms: ['HS256'] });
-      if (typeof datos === 'string' || typeof datos.sub !== 'string' || typeof datos.rolActivo !== 'string') {
+      if (typeof datos === 'string' || typeof datos.sub !== 'string' || typeof datos.rolActivo !== 'string' || typeof datos.exp !== 'number' || typeof datos.jti !== 'string' || !/^[0-9a-f-]{36}$/.test(datos.jti)) {
         return null;
       }
-      return { sub: datos.sub, rolActivo: datos.rolActivo };
+      return { sub: datos.sub, rolActivo: datos.rolActivo, sesionId: datos.jti, expiraEn: datos.exp };
     } catch {
       return null;
     }

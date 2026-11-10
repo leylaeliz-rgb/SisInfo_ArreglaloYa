@@ -1,7 +1,7 @@
-import { Controller, Req, UseGuards, Post, Put, Param, Body } from '@nestjs/common';
+import { Patch, Controller, Req, UseGuards, Post, Put, Param, Body } from '@nestjs/common';
 import { AuthGuard } from '../../auth/api/auth.guard';
 import type { SolicitudAutenticada } from '../../auth/api/auth.guard';
-import { resultado, exigirRol, id, importe, booleano } from '../../shared/api/validacion';
+import { resultado, exigirRol, id, importe, booleano, texto } from '../../shared/api/validacion';
 import { OperacionesCotizacionesService } from '../services/operaciones.service';
 
 @Controller('cotizaciones')
@@ -36,5 +36,15 @@ export class OperacionesCotizacionesController {
       solicitud.user.sub,
       id(recursoId),
     ));
+  }
+
+  @Patch(':id')
+  editarCondiciones(
+    @Req() solicitud: SolicitudAutenticada,
+    @Param('id') recursoId: string,
+    @Body('condiciones') condiciones: unknown,
+  ) {
+    exigirRol(solicitud.user.rolActivo, 'trabajador');
+    return resultado(this.operaciones.editarCondiciones(solicitud.user.sub, id(recursoId), texto(2000)(condiciones)));
   }
 }

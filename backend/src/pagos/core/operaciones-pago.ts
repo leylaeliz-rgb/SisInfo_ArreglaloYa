@@ -2,7 +2,8 @@ export type MetodoSaldo = 'efectivo' | 'qr_acordado';
 export type AccionPago =
   | { tipo: 'anticipo' }
   | { tipo: 'reportar-saldo'; metodo: MetodoSaldo }
-  | { tipo: 'confirmar-saldo' };
+  | { tipo: 'confirmar-saldo' }
+  | { tipo: 'revertir-anticipo'; motivo: string };
 
 export interface PagoRegistrado {
   id: string;

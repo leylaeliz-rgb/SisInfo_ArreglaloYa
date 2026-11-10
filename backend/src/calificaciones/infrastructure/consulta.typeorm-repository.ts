@@ -8,7 +8,7 @@ export class CalificacionesTypeOrmRepository implements CalificacionesRepository
 
   listar(usuarioId: string): Promise<Record<string, unknown>[]> {
     return this.db.query(
-      `SELECT id, servicio_id, estrellas, comentario, actualizada_en FROM calificaciones_trabajador WHERE cliente_id = $1 OR trabajador_id = $1 ORDER BY id DESC LIMIT 100`,
+      `SELECT id, servicio_id, estrellas, comentario, actualizada_en FROM calificaciones_trabajador WHERE retirada_en IS NULL AND (cliente_id = $1 OR trabajador_id = $1) ORDER BY id DESC LIMIT 100`,
       [usuarioId],
     );
   }

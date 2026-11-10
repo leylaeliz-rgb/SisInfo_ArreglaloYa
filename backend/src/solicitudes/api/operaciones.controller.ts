@@ -1,4 +1,4 @@
-import { Controller, Req, UseGuards, Post, Patch, Put, Param, Body } from '@nestjs/common';
+import { Controller, Req, UseGuards, Post, Patch, Put, Param, Body, Get } from '@nestjs/common';
 import { AuthGuard } from '../../auth/api/auth.guard';
 import type { SolicitudAutenticada } from '../../auth/api/auth.guard';
 import { resultado, exigirRol, id, texto, booleano } from '../../shared/api/validacion';
@@ -52,5 +52,33 @@ export class OperacionesSolicitudesController {
       id(recursoId),
       texto(1000)(cuerpo?.motivo),
     ));
+  }
+
+  @Post('directas/:id')
+  publicarDirecta(
+    @Req() solicitud: SolicitudAutenticada,
+    @Param('id') recursoId: string,
+    @Body() cuerpo: Record<string, unknown> | undefined,
+  ) {
+    exigirRol(solicitud.user.rolActivo, 'cliente');
+    return resultado(this.operaciones.publicarDirecta(
+      solicitud.user.sub,
+      id(recursoId),
+      id(cuerpo?.categoriaId),
+      id(cuerpo?.zonaId),
+      texto(150)(cuerpo?.titulo),
+      texto(4000)(cuerpo?.descripcion),
+      booleano(cuerpo?.urgente),
+    ));
+  }
+
+  @Get('explorar')
+  explorar(
+    @Req() solicitud: SolicitudAutenticada,
+  ) {
+    exigirRol(solicitud.user.rolActivo, 'trabajador');
+    return this.operaciones.explorar(
+      solicitud.user.sub,
+    );
   }
 }

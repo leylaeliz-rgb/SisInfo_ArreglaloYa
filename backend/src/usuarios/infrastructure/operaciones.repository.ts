@@ -13,4 +13,14 @@ export class OperacionesUsuariosTypeOrmRepository implements OperacionesUsuarios
     );
     return fila;
   }
+
+  async desactivar(usuarioId: string): Promise<ResultadoUsuarios | undefined> {
+    const [fila] = await this.db.query(
+      `UPDATE usuarios SET estado_cuenta='inactiva',actualizado_en=NOW() WHERE id=$1 AND estado_cuenta='activa'
+AND NOT EXISTS (SELECT 1 FROM servicios WHERE (cliente_id=$1 OR trabajador_id=$1) AND estado NOT IN ('finalizado','cancelado'))
+RETURNING id,estado_cuenta`,
+      [usuarioId],
+    );
+    return fila;
+  }
 }

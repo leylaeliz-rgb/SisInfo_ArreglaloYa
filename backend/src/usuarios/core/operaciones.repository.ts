@@ -5,4 +5,6 @@ export interface ResultadoUsuarios {
 
 export interface OperacionesUsuariosRepository {
   actualizarPerfil(usuarioId: string, nombreCompleto: string): Promise<ResultadoUsuarios | undefined>;
+
+  desactivar(usuarioId: string): Promise<ResultadoUsuarios | undefined>;
 }

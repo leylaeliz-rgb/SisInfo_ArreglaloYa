@@ -1,7 +1,7 @@
-import { CredencialesInvalidas, CuentasAuth, Identidad, RolNoAsignado, Seguridad } from '../core/seguridad';
+import { CredencialesInvalidas, CuentasAuth, Identidad, RolNoAsignado, Seguridad, RevocacionesSesion } from '../core/seguridad';
 
 export class AuthService {
-  constructor(private readonly cuentas: CuentasAuth, private readonly seguridad: Seguridad) {}
+  constructor(private readonly cuentas: CuentasAuth, private readonly seguridad: Seguridad, private readonly revocaciones: RevocacionesSesion) {}
 
   async registrar(nombre: string, telefono: string, password: string, rol: string) {
     return this.cuentas.crear(nombre, telefono, await this.seguridad.hash(password), rol);
@@ -17,7 +17,7 @@ export class AuthService {
 
   async autenticar(token: string): Promise<Identidad> {
     const identidad = this.seguridad.verificar(token);
-    if (!identidad) throw new CredencialesInvalidas();
+    if (!identidad || await this.revocaciones.existe(identidad.sesionId)) throw new CredencialesInvalidas();
     const cuenta = await this.cuentas.buscar(identidad.sub);
     if (!cuenta?.roles.includes(identidad.rolActivo)) throw new CredencialesInvalidas();
     return { ...identidad, roles: cuenta.roles };
@@ -25,7 +25,15 @@ export class AuthService {
 
   cambiarRol(identidad: Identidad, rol: string) {
     if (!identidad.roles.includes(rol)) throw new RolNoAsignado();
-    return this.emitir(identidad.sub, rol);
+    return {
+      accessToken: this.seguridad.emitir(identidad.sub, rol, identidad),
+      rolActivo: rol,
+      expiresIn: Math.max(0, identidad.expiraEn - Math.floor(Date.now() / 1000)),
+    };
+  }
+
+  cerrarSesion(identidad: Identidad) {
+    return this.revocaciones.registrar(identidad.sesionId, identidad.expiraEn);
   }
 
   private emitir(id: string, rolActivo: string) {

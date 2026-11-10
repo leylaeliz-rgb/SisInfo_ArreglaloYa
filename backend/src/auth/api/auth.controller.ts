@@ -51,6 +51,13 @@ export class AuthController {
     }
   }
 
+  @Post('logout')
+  @UseGuards(AuthGuard)
+  @HttpCode(204)
+  async cerrarSesion(@Req() solicitud: SolicitudAutenticada) {
+    await this.auth.cerrarSesion(solicitud.user);
+  }
+
   private credenciales(cuerpo: Record<string, unknown> | undefined) {
     const { telefono, password } = cuerpo ?? {};
     if (typeof telefono !== 'string' || !/^\+?[0-9]{7,19}$/.test(telefono) ||

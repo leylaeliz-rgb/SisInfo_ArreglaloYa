@@ -13,9 +13,33 @@ export class OperacionesPagoTypeOrmRepository implements OperacionesPagoReposito
   ejecutar(servicioId: string, usuarioId: string, accion: AccionPago): Promise<PagoRegistrado> {
     return this.db.transaction(async (tx) => {
       const [servicio] = await tx.query(
-        'SELECT cliente_id, trabajador_id, estado FROM servicios WHERE id = $1 FOR UPDATE',
+        'SELECT cliente_id, trabajador_id, estado, iniciado_en, cancelado_por, fecha_visita, cancelado_en FROM servicios WHERE id = $1 FOR UPDATE',
         [servicioId],
       );
+      if (accion.tipo === 'revertir-anticipo') {
+        if (!servicio) throw new ServicioInaccesible('No se encontró el servicio.');
+        if (servicio.estado !== 'cancelado' || servicio.iniciado_en) {
+          throw new PagoNoPermitido('La reversión requiere un servicio cancelado antes de iniciar.');
+        }
+        if (servicio.cancelado_por === servicio.cliente_id &&
+            (!servicio.fecha_visita || !servicio.cancelado_en ||
+             servicio.fecha_visita.getTime() - servicio.cancelado_en.getTime() < 7_200_000)) {
+          throw new PagoNoPermitido('La cancelación del cliente no cumple la ventana de devolución.');
+        }
+        const [pago]: PagoRegistrado[] = await tx.query(
+          `SELECT ${columnas} FROM pagos WHERE servicio_id=$1 AND tipo='anticipo'
+           AND metodo='qr_simulado' AND estado='confirmado'`,
+          [servicioId],
+        );
+        if (!pago) throw new PagoNoPermitido('No hay un anticipo simulado confirmado.');
+        await tx.query(
+          `INSERT INTO reversiones_pago_simulado (pago_id, registrada_por, motivo)
+           VALUES ($1,$2,$3) ON CONFLICT (pago_id) DO NOTHING`,
+          [pago.id, usuarioId, accion.motivo],
+        );
+        return { ...pago, estado: 'revertido' };
+      }
+
       const participante = accion.tipo === 'confirmar-saldo' ? servicio?.trabajador_id : servicio?.cliente_id;
       if (participante !== usuarioId) {
         throw new ServicioInaccesible('No se encontró el servicio para esta operación.');

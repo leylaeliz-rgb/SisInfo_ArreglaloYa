@@ -10,7 +10,7 @@ export class OperacionesCotizacionesTypeOrmRepository implements OperacionesCoti
     const [fila] = await this.db.query(
       `WITH solicitud AS (SELECT * FROM solicitudes_servicio WHERE id=$2 AND cliente_id<>$1 AND estado IN ('publicada','recibiendo_ofertas') FOR UPDATE)
 INSERT INTO cotizaciones (solicitud_id,trabajador_id,monto_mano_obra,monto_materiales,materiales_incluidos,costo_transporte,requiere_visita,monto_estimado_total)
-SELECT s.id,$1,$3,$4,$4::numeric>0,$5,$6,ROUND(($3::numeric+$4::numeric)*(1+s.recargo_urgencia_pct/100)+$5::numeric,2)
+SELECT s.id,$1,$3,$4,$4::numeric>0,$5,$6,ROUND($3::numeric*(1+s.recargo_urgencia_pct/100)+$4::numeric+$5::numeric,2)
 FROM solicitud s JOIN perfiles_trabajador p ON p.usuario_id=$1 AND p.estado_verificacion='aprobado' AND p.disponible
 WHERE ($6 OR $5::numeric=0) AND (s.modalidad='publica' OR s.trabajador_destino_id=$1)
 AND EXISTS (SELECT 1 FROM trabajador_categorias WHERE trabajador_id=$1 AND categoria_id=s.categoria_id)
@@ -28,6 +28,16 @@ RETURNING id,estado,monto_estimado_total`,
     const [fila] = await this.db.query(
       `UPDATE cotizaciones SET estado='retirada', decidida_en=NOW() WHERE trabajador_id=$1 AND id=$2 AND estado='enviada' RETURNING id,estado`,
       [usuarioId, recursoId],
+    );
+    return fila;
+  }
+
+  async editarCondiciones(usuarioId: string, recursoId: string, condiciones: string): Promise<ResultadoCotizaciones | undefined> {
+    const [fila] = await this.db.query(
+      `UPDATE cotizaciones c SET condiciones=$3 FROM solicitudes_servicio s
+WHERE c.id=$2 AND c.trabajador_id=$1 AND c.estado='enviada' AND s.id=c.solicitud_id
+AND s.estado IN ('publicada','recibiendo_ofertas') RETURNING c.id,c.estado,c.condiciones`,
+      [usuarioId, recursoId, condiciones],
     );
     return fila;
   }

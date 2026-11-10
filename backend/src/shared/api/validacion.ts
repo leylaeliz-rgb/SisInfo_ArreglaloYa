@@ -61,3 +61,11 @@ export async function resultado<T>(operacion: Promise<T | undefined>): Promise<T
   }
   return fila;
 }
+
+export function fechaFutura(valor: unknown): string {
+  if (typeof valor !== 'string' || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{3})?(?:Z|[+-]\d{2}:\d{2})$/.test(valor) ||
+      !Number.isFinite(Date.parse(valor)) || Date.parse(valor) <= Date.now()) {
+    throw new BadRequestException('Indica una fecha futura ISO 8601 con zona horaria.');
+  }
+  return new Date(valor).toISOString();
+}

@@ -14,10 +14,13 @@ import { ConfiguracionTrabajadorController } from './api/configuracion.controlle
 import { ConfiguracionTrabajadorTypeOrmRepository } from './infrastructure/configuracion.repository';
 import { ConfiguracionTrabajadorService } from './services/configuracion.service';
 
+import { PausasVencidasJob } from './infrastructure/reglas-programadas.job';
+
 @Module({
   imports: [TypeOrmModule.forFeature([PerfilTrabajadorOrmEntity])],
   controllers: [ConfiguracionTrabajadorController, OperacionesTrabajadoresController, TrabajadoresController],
   providers: [
+    PausasVencidasJob,
     ConfiguracionTrabajadorTypeOrmRepository,
     {
       provide: ConfiguracionTrabajadorService,

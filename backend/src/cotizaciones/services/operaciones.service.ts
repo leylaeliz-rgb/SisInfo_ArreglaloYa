@@ -10,4 +10,8 @@ export class OperacionesCotizacionesService {
   retirar(usuarioId: string, recursoId: string) {
     return this.repositorio.retirar(usuarioId, recursoId);
   }
+
+  editarCondiciones(usuarioId: string, recursoId: string, condiciones: string) {
+    return this.repositorio.editarCondiciones(usuarioId, recursoId, condiciones);
+  }
 }

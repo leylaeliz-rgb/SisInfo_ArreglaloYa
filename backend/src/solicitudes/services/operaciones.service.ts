@@ -14,4 +14,12 @@ export class OperacionesSolicitudesService {
   cancelar(usuarioId: string, recursoId: string, motivo: string) {
     return this.repositorio.cancelar(usuarioId, recursoId, motivo);
   }
+
+  publicarDirecta(usuarioId: string, recursoId: string, categoriaId: string, zonaId: string, titulo: string, descripcion: string, urgente: boolean) {
+    return this.repositorio.publicarDirecta(usuarioId, recursoId, categoriaId, zonaId, titulo, descripcion, urgente);
+  }
+
+  explorar(usuarioId: string) {
+    return this.repositorio.explorar(usuarioId);
+  }
 }

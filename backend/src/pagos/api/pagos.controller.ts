@@ -44,12 +44,25 @@ export class PagosController {
     return this.ejecutar(solicitud, id, { tipo: 'confirmar-saldo' });
   }
 
+  @Put(':servicioId/anticipo/reversion')
+  revertirAnticipo(
+    @Req() solicitud: SolicitudAutenticada,
+    @Param('servicioId') id: string,
+    @Body('motivo') motivo: unknown,
+  ) {
+    if (typeof motivo !== 'string' || !motivo.trim() || motivo.trim().length > 1000) {
+      throw new BadRequestException('Indica el motivo de la reversión.');
+    }
+    return this.ejecutar(solicitud, id, { tipo: 'revertir-anticipo', motivo: motivo.trim() });
+  }
+
   private async ejecutar(solicitud: SolicitudAutenticada, id: string, accion: AccionPago) {
     if (!/^[1-9][0-9]{0,18}$/.test(id) || BigInt(id) > 9223372036854775807n) {
       throw new BadRequestException('El identificador de servicio es inválido.');
     }
 
-    const rol = accion.tipo === 'confirmar-saldo' ? 'trabajador' : 'cliente';
+    const rol = accion.tipo === 'revertir-anticipo' ? 'administrador' :
+      accion.tipo === 'confirmar-saldo' ? 'trabajador' : 'cliente';
     if (solicitud.user.rolActivo !== rol) {
       throw new ForbiddenException(`Activa el rol ${rol} para realizar esta operación.`);
     }

@@ -1,5 +1,7 @@
 export interface Identidad {
   sub: string;
+  sesionId: string;
+  expiraEn: number;
   roles: string[];
   rolActivo: string;
 }
@@ -7,7 +9,7 @@ export interface Identidad {
 export interface Seguridad {
   hash(password: string): Promise<string>;
   comprobar(password: string, hash: string): Promise<boolean>;
-  emitir(sub: string, rolActivo: string): string;
+  emitir(sub: string, rolActivo: string, sesion?: Pick<Identidad, 'sesionId' | 'expiraEn'>): string;
   verificar(token: string): Omit<Identidad, 'roles'> | null;
 }
 
@@ -19,3 +21,8 @@ export interface CuentasAuth {
 
 export class CredencialesInvalidas extends Error {}
 export class RolNoAsignado extends Error {}
+
+export interface RevocacionesSesion {
+  existe(sesionId: string): Promise<boolean>;
+  registrar(sesionId: string, expiraEn: number): Promise<void>;
+}

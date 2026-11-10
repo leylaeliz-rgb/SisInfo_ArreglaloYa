@@ -8,10 +8,13 @@ import { OperacionesSolicitudesController } from './api/operaciones.controller';
 import { OperacionesSolicitudesTypeOrmRepository } from './infrastructure/operaciones.repository';
 import { OperacionesSolicitudesService } from './services/operaciones.service';
 
+import { PrioridadSolicitudesJob } from './infrastructure/reglas-programadas.job';
+
 @Module({
   imports: [AuthModule],
   controllers: [OperacionesSolicitudesController, SolicitudesController],
   providers: [
+    PrioridadSolicitudesJob,
     OperacionesSolicitudesTypeOrmRepository,
     {
       provide: OperacionesSolicitudesService,

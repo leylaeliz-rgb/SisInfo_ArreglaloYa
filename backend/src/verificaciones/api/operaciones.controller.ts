@@ -1,4 +1,4 @@
-import { Controller, Req, UseGuards, Post, Put, Param, Body } from '@nestjs/common';
+import { Delete, Controller, Req, UseGuards, Post, Put, Param, Body } from '@nestjs/common';
 import { AuthGuard } from '../../auth/api/auth.guard';
 import type { SolicitudAutenticada } from '../../auth/api/auth.guard';
 import { resultado, exigirRol, id, opcion, texto } from '../../shared/api/validacion';
@@ -31,6 +31,31 @@ export class OperacionesVerificacionesController {
       id(recursoId),
       opcion('aprobada', 'rechazada', 'requiere_informacion')(cuerpo?.estado),
       texto(1000)(cuerpo?.motivo),
+    ));
+  }
+
+  @Delete(':id')
+  retirarSolicitud(
+    @Req() solicitud: SolicitudAutenticada,
+    @Param('id') recursoId: string,
+  ) {
+    exigirRol(solicitud.user.rolActivo, 'trabajador');
+    return resultado(this.operaciones.retirarSolicitud(solicitud.user.sub, id(recursoId)));
+  }
+
+  @Put(':id/criterios')
+  registrarCriterio(
+    @Req() solicitud: SolicitudAutenticada,
+    @Param('id') recursoId: string,
+    @Body() cuerpo: Record<string, unknown> | undefined,
+  ) {
+    exigirRol(solicitud.user.rolActivo, 'administrador');
+    return resultado(this.operaciones.registrarCriterio(
+      solicitud.user.sub,
+      id(recursoId),
+      opcion('identidad', 'antecedentes', 'habilidades', 'reputacion')(cuerpo?.criterio),
+      opcion('aprobado', 'rechazado', 'requiere_informacion')(cuerpo?.estado),
+      texto(2000)(cuerpo?.observaciones),
     ));
   }
 }

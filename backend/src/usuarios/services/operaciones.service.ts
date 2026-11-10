@@ -6,4 +6,8 @@ export class OperacionesUsuariosService {
   actualizarPerfil(usuarioId: string, nombreCompleto: string) {
     return this.repositorio.actualizarPerfil(usuarioId, nombreCompleto);
   }
+
+  desactivar(usuarioId: string) {
+    return this.repositorio.desactivar(usuarioId);
+  }
 }

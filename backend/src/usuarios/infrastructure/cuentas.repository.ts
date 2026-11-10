@@ -3,8 +3,15 @@ import { DataSource, QueryFailedError } from 'typeorm';
 import { Cuenta, CuentasRepository, TelefonoDuplicado } from '../core/cuenta';
 
 const columnas = `u.id, u.nombre_completo AS "nombreCompleto", u.telefono,
-  ARRAY(SELECT lower(r.codigo) FROM usuario_roles ur JOIN roles r ON r.id = ur.rol_id
-        WHERE ur.usuario_id = u.id ORDER BY r.codigo) AS roles`;
+  ARRAY(
+    SELECT DISTINCT lower(efectivo.codigo)
+    FROM usuario_roles ur
+    JOIN roles asignado ON asignado.id=ur.rol_id
+    JOIN roles efectivo ON efectivo.id=asignado.id
+      OR (asignado.codigo='TRABAJADOR' AND efectivo.codigo='CLIENTE')
+      OR (asignado.codigo='ADMINISTRADOR' AND efectivo.codigo IN ('CLIENTE','TRABAJADOR'))
+    WHERE ur.usuario_id=u.id ORDER BY lower(efectivo.codigo)
+  ) AS roles`;
 
 @Injectable()
 export class CuentasTypeOrmRepository implements CuentasRepository {

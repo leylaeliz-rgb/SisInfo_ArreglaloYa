@@ -21,4 +21,18 @@ export class OperacionesReclamosTypeOrmRepository implements OperacionesReclamos
     );
     return fila;
   }
+
+  async retirar(usuarioId: string, recursoId: string): Promise<ResultadoReclamos | undefined> {
+    const [fila] = await this.db.query(
+      `WITH cambio AS (
+UPDATE reclamos SET estado='rechazado',resultado='Retirado por el cliente',resuelto_en=NOW()
+WHERE id=$2 AND cliente_id=$1 AND estado='pendiente' RETURNING id,estado
+), historial AS (
+INSERT INTO historial_reclamo (reclamo_id,estado_anterior,estado_nuevo,cambiado_por,observacion)
+SELECT id,'pendiente',estado,$1,'Retirado por el cliente' FROM cambio
+) SELECT * FROM cambio`,
+      [usuarioId, recursoId],
+    );
+    return fila;
+  }
 }

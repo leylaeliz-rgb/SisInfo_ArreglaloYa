@@ -6,16 +6,19 @@ import { AuthGuard } from './api/auth.guard';
 import { SeguridadAdapter } from './infrastructure/seguridad.adapter';
 import { AuthService } from './services/auth.service';
 
+import { RevocacionesTypeOrmRepository } from './infrastructure/revocaciones.repository';
+
 @Global()
 @Module({
   imports: [UsuariosModule],
   controllers: [AuthController],
   providers: [
     SeguridadAdapter,
+    RevocacionesTypeOrmRepository,
     {
       provide: AuthService,
-      inject: [UsuariosService, SeguridadAdapter],
-      useFactory: (cuentas: UsuariosService, seguridad: SeguridadAdapter) => new AuthService(cuentas, seguridad),
+      inject: [UsuariosService, SeguridadAdapter, RevocacionesTypeOrmRepository],
+      useFactory: (cuentas: UsuariosService, seguridad: SeguridadAdapter, revocaciones: RevocacionesTypeOrmRepository) => new AuthService(cuentas, seguridad, revocaciones),
     },
     AuthGuard,
   ],

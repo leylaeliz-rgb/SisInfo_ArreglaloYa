@@ -1,4 +1,4 @@
-import { Controller, Req, UseGuards, Post, Put, Param, Body } from '@nestjs/common';
+import { Delete, Controller, Req, UseGuards, Post, Put, Param, Body } from '@nestjs/common';
 import { AuthGuard } from '../../auth/api/auth.guard';
 import type { SolicitudAutenticada } from '../../auth/api/auth.guard';
 import { resultado, exigirRol, id, texto, opcion } from '../../shared/api/validacion';
@@ -37,5 +37,14 @@ export class OperacionesReclamosController {
       opcion('resuelto', 'rechazado')(cuerpo?.estado),
       texto(4000)(cuerpo?.resultado),
     ));
+  }
+
+  @Delete(':id')
+  retirar(
+    @Req() solicitud: SolicitudAutenticada,
+    @Param('id') recursoId: string,
+  ) {
+    exigirRol(solicitud.user.rolActivo, 'cliente');
+    return resultado(this.operaciones.retirar(solicitud.user.sub, id(recursoId)));
   }
 }

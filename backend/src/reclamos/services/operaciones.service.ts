@@ -10,4 +10,8 @@ export class OperacionesReclamosService {
   resolver(usuarioId: string, recursoId: string, estado: string, resultado: string) {
     return this.repositorio.resolver(usuarioId, recursoId, estado, resultado);
   }
+
+  retirar(usuarioId: string, recursoId: string) {
+    return this.repositorio.retirar(usuarioId, recursoId);
+  }
 }
