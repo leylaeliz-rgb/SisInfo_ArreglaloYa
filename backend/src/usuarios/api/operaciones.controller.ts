@@ -1,4 +1,4 @@
-import { Delete, Controller, Req, UseGuards, Patch, Body } from '@nestjs/common';
+import { Post, Delete, Controller, Req, UseGuards, Patch, Body } from '@nestjs/common';
 import { AuthGuard } from '../../auth/api/auth.guard';
 import type { SolicitudAutenticada } from '../../auth/api/auth.guard';
 import { resultado, texto } from '../../shared/api/validacion';
@@ -25,5 +25,10 @@ export class OperacionesUsuariosController {
     @Req() solicitud: SolicitudAutenticada,
   ) {
     return resultado(this.operaciones.desactivar(solicitud.user.sub));
+  }
+
+  @Post('inscripcion-trabajador')
+  inscribirseComoTrabajador(@Req() solicitud: SolicitudAutenticada) {
+    return resultado(this.operaciones.inscribirseComoTrabajador(solicitud.user.sub));
   }
 }

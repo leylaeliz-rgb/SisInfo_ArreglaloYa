@@ -10,4 +10,8 @@ export class OperacionesUsuariosService {
   desactivar(usuarioId: string) {
     return this.repositorio.desactivar(usuarioId);
   }
+
+  inscribirseComoTrabajador(usuarioId: string) {
+    return this.repositorio.inscribirseComoTrabajador(usuarioId);
+  }
 }

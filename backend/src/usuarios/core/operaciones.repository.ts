@@ -7,4 +7,6 @@ export interface OperacionesUsuariosRepository {
   actualizarPerfil(usuarioId: string, nombreCompleto: string): Promise<ResultadoUsuarios | undefined>;
 
   desactivar(usuarioId: string): Promise<ResultadoUsuarios | undefined>;
+
+  inscribirseComoTrabajador(usuarioId: string): Promise<ResultadoUsuarios | undefined>;
 }
