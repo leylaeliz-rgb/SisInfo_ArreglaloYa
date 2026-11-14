@@ -1,21 +1,29 @@
-# Dependencias
-**/node_modules/
-
-# Archivos compilados
-**/dist/
-**/build/
-**/coverage/
-
-# Archivos temporales de TypeScript
-**/*.tsbuildinfo
+# Dependencias y builds
+node_modules/
+dist/
+coverage/
 
 # Variables de entorno
-**/.env
-**/.env.*
-!**/.env.example
+.env
+.env.*
+!.env.example
 
 # Logs
 *.log
+logs/
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
 
-# Archivos temporales de Windows
+# Sistema operativo
+.DS_Store
 Thumbs.db
+
+# Editores
+.vscode/
+.idea/
+
+# Temporales
+*.tmp
+*.bak
+*.swp
