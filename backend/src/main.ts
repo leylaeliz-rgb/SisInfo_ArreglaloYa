@@ -11,10 +11,6 @@ async function bootstrap() {
     allowedHeaders: ['Content-Type', 'Authorization'],
     // credentials: true, // solo si usas cookies
   });
-
-  // Opcional: prefijo para todas las rutas (/api/...)
-  app.setGlobalPrefix('api');
-
   await app.listen(process.env.PORT ?? 3000);
 }
 bootstrap();
