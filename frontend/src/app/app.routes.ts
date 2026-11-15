@@ -1,9 +1,18 @@
-// app/app.routes.ts
+// src/app/app.routes.ts
 import { Routes } from '@angular/router';
-import { authGuard, rolGuard } from './core/guards/auth.guard';
+import { authGuard, invitadoGuard, rolGuard } from './core/guards/auth.guard';
 
 export const routes: Routes = [
-  { path: 'login', loadComponent: () => import('./features/auth/login').then((m) => m.Login) },
+  {
+    path: 'login',
+    canActivate: [invitadoGuard],
+    loadComponent: () => import('./features/auth/login').then((m) => m.Login),
+  },
+  {
+    path: 'registro',
+    canActivate: [invitadoGuard],
+    loadComponent: () => import('./features/auth/registro').then((m) => m.Registro),
+  },
   {
     path: 'perfil',
     canActivate: [authGuard],

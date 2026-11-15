@@ -1,19 +1,29 @@
-// features/auth/login.ts
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { mensajeError } from '../../core/utils/errores';
 
 @Component({
   selector: 'app-login',
-  imports: [FormsModule],
+  imports: [FormsModule, RouterLink],
   template: `
-    <h2>Iniciar sesión</h2>
-    <input [(ngModel)]="telefono" placeholder="Teléfono" />
-    <input [(ngModel)]="password" type="password" placeholder="Contraseña" />
-    <button (click)="entrar()">Entrar</button>
-    @if (error()) { <p style="color:red">{{ error() }}</p> }
+    <section class="tarjeta">
+      <h1>Iniciar sesión</h1>
+      <form (ngSubmit)="entrar()">
+        <label class="campo">Teléfono
+          <input name="telefono" [(ngModel)]="telefono" required inputmode="tel" autocomplete="username" />
+        </label>
+        <label class="campo">Contraseña
+          <input name="password" type="password" [(ngModel)]="password" required autocomplete="current-password" />
+        </label>
+        @if (error()) { <p class="error">{{ error() }}</p> }
+        <button class="btn" type="submit" [disabled]="cargando()">
+          {{ cargando() ? 'Entrando…' : 'Entrar' }}
+        </button>
+      </form>
+      <p>¿No tienes cuenta? <a routerLink="/registro">Regístrate</a></p>
+    </section>
   `,
 })
 export class Login {
@@ -23,11 +33,17 @@ export class Login {
   telefono = '';
   password = '';
   error = signal('');
+  cargando = signal(false);
 
   entrar() {
-    this.auth.login({ telefono: this.telefono, password: this.password }).subscribe({
+    this.error.set('');
+    this.cargando.set(true);
+    this.auth.login({ telefono: this.telefono.trim(), password: this.password }).subscribe({
       next: () => this.router.navigate(['/perfil']),
-      error: (e) => this.error.set(mensajeError(e)),
+      error: (e) => {
+        this.error.set(mensajeError(e));
+        this.cargando.set(false);
+      },
     });
   }
 }

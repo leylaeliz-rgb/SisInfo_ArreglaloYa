@@ -1,27 +1,54 @@
-// features/usuarios/perfil.ts
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
-import { Cuenta } from '../../core/models/auth.models';
+import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
+import { Cuenta, Rol } from '../../core/models/auth.models';
 import { AuthService } from '../../core/services/auth.service';
 import { UsuariosService } from '../../core/services/usuarios.service';
 import { mensajeError } from '../../core/utils/errores';
 
 @Component({
   selector: 'app-perfil',
-  imports: [RouterLink],
+  imports: [FormsModule],
   template: `
     @if (cuenta(); as c) {
-      <h2>{{ c.nombreCompleto }}</h2>
-      <p>Teléfono: {{ c.telefono }}</p>
-      <p>Roles: {{ c.roles.join(', ') }} | Activo: {{ auth.rolActivo() }}</p>
+      <section class="tarjeta">
+        <h1>Mi perfil</h1>
+        <p><b>Teléfono:</b> {{ c.telefono }}</p>
 
-      @if (c.roles.includes('administrador')) {
-        <button (click)="pasarAAdmin()">Entrar como administrador</button>
-        <a routerLink="/admin">Panel admin</a>
-      }
+        <form (ngSubmit)="guardarNombre()">
+          <label class="campo">Nombre completo
+            <input name="nombre" [(ngModel)]="nombre" required maxlength="150" />
+          </label>
+          <button class="btn" type="submit">Guardar nombre</button>
+        </form>
+      </section>
+
+      <section class="tarjeta">
+        <h2>Mis roles</h2>
+        <p>Elige con qué rol quieres usar la aplicación:</p>
+        <div class="fila">
+          @for (r of c.roles; track r) {
+            <button class="btn-sec" [class.activo]="r === auth.rolActivo()" (click)="cambiarRol(r)">
+              {{ r }}
+            </button>
+          }
+        </div>
+
+        @if (!c.roles.includes('trabajador')) {
+          <p>¿Quieres ofrecer tus servicios?</p>
+          <button class="btn-sec" (click)="hacerseTrabajador()">Inscribirme como trabajador</button>
+        }
+      </section>
+
+      <section class="tarjeta">
+        <h2>Zona de peligro</h2>
+        <p>Al desactivar tu cuenta ya no podrás iniciar sesión.</p>
+        <button class="btn-peligro" (click)="desactivar()">Desactivar mi cuenta</button>
+      </section>
     }
-    @if (error()) { <p style="color:red">{{ error() }}</p> }
-    <button (click)="salir()">Cerrar sesión</button>
+
+    @if (mensaje()) { <p class="exito">{{ mensaje() }}</p> }
+    @if (error()) { <p class="error">{{ error() }}</p> }
   `,
 })
 export class Perfil implements OnInit {
@@ -30,26 +57,68 @@ export class Perfil implements OnInit {
   private router = inject(Router);
 
   cuenta = signal<Cuenta | null>(null);
+  nombre = '';
+  mensaje = signal('');
   error = signal('');
 
   ngOnInit() {
+    this.cargar();
+  }
+
+  cargar() {
     this.usuarios.consultar().subscribe({
-      next: (c) => this.cuenta.set(c),
+      next: (c) => {
+        this.cuenta.set(c);
+        this.nombre = c.nombreCompleto;
+      },
       error: (e) => this.error.set(mensajeError(e)),
     });
   }
 
-  pasarAAdmin() {
-    this.auth.cambiarRol('administrador').subscribe({
-      next: () => this.router.navigate(['/admin']),
+  guardarNombre() {
+    this.limpiar();
+    this.usuarios.actualizarPerfil(this.nombre.trim()).subscribe({
+      next: () => {
+        this.mensaje.set('Nombre actualizado.');
+        this.cargar();
+      },
       error: (e) => this.error.set(mensajeError(e)),
     });
   }
 
-  salir() {
-    this.auth.logout().subscribe({
-      complete: () => this.router.navigate(['/login']),
-      error: () => this.router.navigate(['/login']),
+  cambiarRol(rol: Rol) {
+    this.limpiar();
+    this.auth.cambiarRol(rol).subscribe({
+      next: () => this.mensaje.set(`Ahora usas la aplicación como ${rol}.`),
+      error: (e) => this.error.set(mensajeError(e)),
     });
+  }
+
+  hacerseTrabajador() {
+    this.limpiar();
+    this.usuarios.inscribirseComoTrabajador().subscribe({
+      next: () => {
+        this.mensaje.set('Ya eres trabajador. Puedes cambiar a ese rol arriba.');
+        this.cargar();
+      },
+      error: (e) => this.error.set(mensajeError(e)),
+    });
+  }
+
+  desactivar() {
+    if (!confirm('¿Seguro que quieres desactivar tu cuenta?')) return;
+    this.limpiar();
+    this.usuarios.desactivar().subscribe({
+      next: () => {
+        this.auth.limpiarSesion();
+        this.router.navigate(['/login']);
+      },
+      error: (e) => this.error.set(mensajeError(e)),
+    });
+  }
+
+  private limpiar() {
+    this.mensaje.set('');
+    this.error.set('');
   }
 }

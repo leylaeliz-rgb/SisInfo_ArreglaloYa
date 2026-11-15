@@ -13,3 +13,8 @@ export const rolGuard = (rol: Rol): CanActivateFn => () => {
   const auth = inject(AuthService);
   return auth.rolActivo() === rol ? true : inject(Router).createUrlTree(['/perfil']);
 };
+
+export const invitadoGuard: CanActivateFn = () => {
+  const auth = inject(AuthService);
+  return auth.autenticado() ? inject(Router).createUrlTree(['/perfil']) : true;
+};
