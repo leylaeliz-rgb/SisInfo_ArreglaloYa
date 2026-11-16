@@ -86,6 +86,16 @@ export class SolicitudesPage extends Pantalla implements OnInit {
   cotizar() {
     const solicitud = this.seleccionada;
     if (!solicitud) return;
+    if (!this.requiereVisita) this.transporte = 0;
+    for (const [nombre, valor] of [
+      ['Mano de obra', this.manoObra], ['Materiales', this.materiales], ['Transporte', this.transporte],
+    ] as const) {
+      if (typeof valor !== 'number' || !Number.isFinite(valor) ||
+          !/^[0-9]{1,8}(\.[0-9]{1,2})?$/.test(String(valor))) {
+        this.error.set(`Completa ${nombre} con un importe válido de hasta dos decimales. Usa 0 si no corresponde.`);
+        return;
+      }
+    }
     void this.realizar(async () => {
       await this.api.enviar('POST', '/cotizaciones/solicitudes/' + solicitud.id, {
         manoObra: String(this.manoObra), materiales: String(this.materiales), transporte: String(this.transporte),

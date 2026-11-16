@@ -45,15 +45,16 @@
 }
 @if (seleccionada; as s) {
 <section class="tarjeta"><h2>Cotizar para {{ s.titulo }}</h2>
-<form (ngSubmit)="cotizar()">
+<form #cotizacionForm="ngForm" (ngSubmit)="cotizar()">
   <div class="rejilla-formularios">
     <label class="campo">Mano de obra (Bs)<input name="manoObra" type="number" [(ngModel)]="manoObra" min="0" max="99999999.99" step=".01" required></label>
     <label class="campo">Materiales (Bs)<input name="materiales" type="number" [(ngModel)]="materiales" min="0" max="99999999.99" step=".01" required></label>
-    <label class="campo">Transporte (Bs)<input name="transporte" type="number" [(ngModel)]="transporte" min="0" max="99999999.99" step=".01" required></label>
+    <label class="campo">Transporte (Bs)<input name="transporte" type="number" [(ngModel)]="transporte" min="0" max="99999999.99" step=".01" required [disabled]="!requiereVisita"></label>
   </div>
-  <label class="fila"><input type="checkbox" name="visita" [(ngModel)]="requiereVisita">Requiere visita de evaluación</label>
+  <label class="fila"><input type="checkbox" name="visita" [(ngModel)]="requiereVisita" (ngModelChange)="transporte=0">Requiere visita de evaluación</label>
+  <p class="ayuda">Completa todos los importes. Usa 0 si no hay materiales. El transporte solo se cobra con visita de evaluación.</p>
   @if (s.urgente) { <p>El sistema añade el recargo urgente sobre la mano de obra.</p> }
-  <div class="fila"><button class="btn">Enviar cotización</button><button type="button" class="btn-sec" (click)="seleccionada=null">Cerrar</button></div>
+  <div class="fila"><button class="btn" [disabled]="cotizacionForm.invalid">Enviar cotización</button><button type="button" class="btn-sec" (click)="seleccionada=null">Cerrar</button></div>
 </form></section>
 }
 <section class="tarjeta"><h2>{{ auth.rolActivo() === 'trabajador' ? 'Solicitudes disponibles' : 'Mis solicitudes' }}</h2>

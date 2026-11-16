@@ -9,7 +9,11 @@ export class UsuariosService {
   private http = inject(HttpClient);
   private base = `${environment.apiUrl}/usuarios/me`;
 
-  consultar() { return this.http.get<Cuenta>(this.base); }
+  consultar() {
+    return this.http.get<Cuenta>(this.base, {
+      params: { actualizado: Date.now().toString() },
+    });
+  }
   roles() { return this.http.get<Rol[]>(`${this.base}/roles`); }
   actualizarPerfil(nombreCompleto: string) { return this.http.patch(this.base, { nombreCompleto }); }
   desactivar() { return this.http.delete(this.base); }

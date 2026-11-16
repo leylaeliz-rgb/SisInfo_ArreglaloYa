@@ -25,6 +25,9 @@ import { mensajeError } from '../../core/utils/errores';
 
       <section class="tarjeta">
         <h2>Mis roles</h2>
+        <button type="button" class="btn-sec" (click)="cargar()" [disabled]="cargando()">
+          {{ cargando() ? 'Consultando roles…' : 'Actualizar perfil y roles' }}
+        </button>
         <p>Elige con qué rol quieres usar la aplicación:</p>
         <div class="fila">
           @for (r of c.roles; track r) {
@@ -60,18 +63,26 @@ export class Perfil implements OnInit {
   nombre = '';
   mensaje = signal('');
   error = signal('');
+  cargando = signal(false);
 
   ngOnInit() {
     this.cargar();
   }
 
   cargar() {
+    if (this.cargando()) return;
+    this.cargando.set(true);
+    this.error.set('');
     this.usuarios.consultar().subscribe({
       next: (c) => {
         this.cuenta.set(c);
         this.nombre = c.nombreCompleto;
+        this.cargando.set(false);
       },
-      error: (e) => this.error.set(mensajeError(e)),
+      error: (e) => {
+        this.error.set(mensajeError(e));
+        this.cargando.set(false);
+      },
     });
   }
 
