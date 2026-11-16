@@ -28,11 +28,5 @@ Thumbs.db
 *.bak
 *.swp
 
-# Angular cache
-frontend/.angular/
+.angular/
 
-# Angular build
-frontend/dist/
-
-# Dependencies
-frontend/node_modules/
