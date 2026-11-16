@@ -19,6 +19,20 @@ export const routes: Routes = [
     loadComponent: () => import('./features/usuarios/perfil').then((m) => m.Perfil),
   },
   {
+    path: 'catalogo',
+    loadComponent: () => import('./features/catalogo/catalogo').then((m) => m.Catalogo),
+  },
+  {
+    path: 'calificaciones',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/calificaciones/calificaciones').then((m) => m.Calificaciones),
+  },
+  {
+    path: 'espacio',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/workspace/workspace').then((m) => m.Workspace),
+  },
+  {
     path: 'admin',
     canActivate: [authGuard, rolGuard('administrador')],
     loadComponent: () => import('./features/administracion/suspensiones').then((m) => m.Suspensiones),

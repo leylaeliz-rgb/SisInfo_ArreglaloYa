@@ -47,3 +47,50 @@ th, td { padding: .5rem; border-bottom: 1px solid var(--borde); text-align: left
   .barra { align-items: flex-start; flex-direction: column; gap: .75rem; }
   .barra nav { flex-wrap: wrap; gap: .65rem; }
 }
+
+/* Pantallas funcionales de catálogo y calificaciones */
+.encabezado-pagina { display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin-bottom: 1.25rem; }
+.encabezado-pagina h1 { margin: .15rem 0 .4rem; }
+.encabezado-pagina p { margin: .25rem 0; color: #57606a; }
+.sobre-titulo { color: var(--primario) !important; font-size: .72rem; font-weight: 700; letter-spacing: .12em; }
+.titulo-seccion { display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin-bottom: 1rem; }
+.titulo-seccion h2 { margin: 0 0 .25rem; }
+.titulo-seccion p { margin: 0; color: #57606a; font-size: .92rem; }
+.contador { white-space: nowrap; color: #57606a; background: var(--fondo); border: 1px solid var(--borde); border-radius: 2rem; padding: .25rem .65rem; font-size: .8rem; }
+.rejilla-catalogo { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: .8rem; }
+.item-catalogo { display: flex; align-items: flex-start; gap: .8rem; padding: 1rem; border: 1px solid var(--borde); border-radius: .45rem; }
+.icono-catalogo { display: grid; place-items: center; width: 2.6rem; height: 2.6rem; flex: 0 0 2.6rem; background: var(--fondo); border-radius: .5rem; font-size: 1.35rem; }
+.item-catalogo h3 { margin: 0 0 .3rem; font-size: 1rem; }
+.item-catalogo p { margin: 0 0 .45rem; color: #57606a; font-size: .88rem; }
+.item-catalogo small { color: #6e7781; }
+.lista-zonas { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: .5rem; }
+.zona { display: flex; align-items: center; gap: .55rem; padding: .65rem .75rem; border: 1px solid var(--borde); border-radius: .4rem; }
+.zona small { margin-left: auto; color: #57606a; }
+.pin { color: var(--primario); font-size: 1.2rem; }
+.vacio { color: #57606a; padding: .8rem 0; }
+.alerta { padding: .7rem .9rem; border-radius: .4rem; background: #fff; border: 1px solid var(--borde); }
+.rejilla-formularios { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.25rem; }
+.rejilla-formularios form { padding: 1rem; border: 1px solid var(--borde); border-radius: .45rem; }
+.rejilla-formularios h3 { margin-top: 0; }
+.tabla-contenedor { overflow-x: auto; }
+.tabla-contenedor table { min-width: 620px; }
+.estrellas { color: #b7791f; letter-spacing: .05em; white-space: nowrap; }
+.formulario-en-linea { display: flex; align-items: flex-end; gap: .75rem; }
+.formulario-en-linea .campo { flex: 1; }
+.resumen-reputacion { display: flex; align-items: center; gap: .65rem; margin-top: 1rem; padding: .9rem; background: var(--fondo); border-radius: .4rem; }
+.resumen-reputacion strong { font-size: 1.5rem; }
+.resumen-reputacion span:last-child { color: #57606a; }
+.referencias { padding-left: 1.2rem; }
+.referencias li { margin: .6rem 0; }
+.referencias small { display: block; color: #57606a; }
+@media (max-width: 640px) {
+  .encabezado-pagina, .titulo-seccion { align-items: flex-start; flex-direction: column; }
+  .formulario-en-linea { align-items: stretch; flex-direction: column; }
+  .formulario-en-linea .btn { align-self: flex-start; }
+}
+.lista-cotizaciones { display: grid; gap: .65rem; }
+.cotizacion { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: .9rem; border: 1px solid var(--borde); border-radius: .45rem; }
+.cotizacion p { margin: .3rem 0 0; color: #57606a; }
+.acciones-cotizacion { display: flex; align-items: center; gap: .6rem; }
+.estado-cotizacion { padding: .25rem .6rem; background: var(--fondo); border: 1px solid var(--borde); border-radius: 2rem; font-size: .8rem; }
+@media (max-width: 640px) { .cotizacion { align-items: flex-start; flex-direction: column; } }

@@ -28,6 +28,5 @@ Thumbs.db
 *.bak
 *.swp
 
-# Angular
 .angular/
-dist/
+
