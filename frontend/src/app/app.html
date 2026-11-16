@@ -6,7 +6,14 @@
     @if (auth.autenticado()) {
       <a routerLink="/perfil" routerLinkActive="activo">Perfil</a>
       <a routerLink="/calificaciones" routerLinkActive="activo">Calificaciones</a>
-      <a routerLink="/espacio" routerLinkActive="activo">Cotizaciones</a>
+            @if (auth.rolActivo() !== 'administrador') {
+        <a routerLink="/solicitudes" routerLinkActive="activo">Solicitudes y ofertas</a>
+        <a routerLink="/servicios" routerLinkActive="activo">Mis servicios</a>
+      }
+      @if (auth.rolActivo() === 'trabajador') {
+        <a routerLink="/profesional" routerLinkActive="activo">Perfil profesional</a>
+      }
+      <a routerLink="/gestion" routerLinkActive="activo">Incidencias</a>
       @if (auth.rolActivo() === 'administrador') {
         <a routerLink="/admin" routerLinkActive="activo">Administración</a>
       }

@@ -1,0 +1,122 @@
+<header class="encabezado-pagina"><div><p class="sobre-titulo">DE LA RESERVA AL CIERRE</p><h1>Mis servicios</h1>
+<p>Revisa precios, coordina la visita y confirma cada etapa del trabajo.</p></div>
+<button class="btn-sec" [disabled]="ocupado()" (click)="actualizar()">Actualizar</button></header>
+<app-feedback [error]="error()" [mensaje]="mensaje()" [ocupado]="ocupado()" />
+<fieldset class="sin-borde" [disabled]="ocupado()">
+<label class="campo">Estado<select [(ngModel)]="filtro"><option value="">Todos</option>
+<option value="en_negociacion">En negociación</option><option value="precio_fijado">Precio fijado</option>
+<option value="agendado">Agendado</option><option value="en_proceso">En proceso</option>
+<option value="finalizado">Finalizado</option><option value="cancelado">Cancelado</option></select></label>
+<div class="rejilla-catalogo">
+@for (s of visibles; track s.id) {
+<button type="button" class="tarjeta servicio-resumen" [class.seleccionado]="seleccionado?.id === s.id" (click)="abrir(s)">
+  <span class="estado-cotizacion">{{ s.estado }}</span><h2>{{ s.titulo }}</h2>
+  <p>{{ esCliente ? s.trabajador : s.cliente }}</p>
+  @if (s.total_acordado) { <strong>{{ s.total_acordado | currency:'BOB' }}</strong> }
+  @if (s.fecha_visita) { <p>{{ s.fecha_visita | date:'dd/MM/yyyy HH:mm' }}</p> }
+  <span class="btn-link">Ver detalle y acciones</span>
+</button>
+} @empty { <p class="vacio">Todavía no hay servicios en este estado. Contrata una oferta desde Solicitudes.</p> }
+</div>
+@if (seleccionado; as s) {
+<section class="tarjeta"><div class="titulo-seccion"><h2>{{ s.titulo }}</h2><span class="estado-cotizacion">{{ s.estado }}</span></div>
+<p>Cliente {{ s.cliente }} · Profesional {{ s.trabajador }}</p>
+<div class="fila acciones">
+@if (esCliente) {
+  @if (s.estado === 'precio_fijado' || s.estado === 'agendado') {
+    <button class="btn-sec" (click)="formulario('visita')">Programar o cambiar visita</button>
+    @if (!pago(s,'anticipo')) { <button class="btn" (click)="anticipo(s)">Registrar anticipo simulado</button> }
+  }
+  @if (s.estado === 'finalizado') {
+    @if (!pago(s,'saldo')) { <button class="btn" (click)="formulario('saldo')">Reportar pago del saldo</button> }
+    <button class="btn-sec" (click)="formulario('calificar')">Calificar trabajo</button>
+    <button class="btn-sec" (click)="formulario('reclamo')">Presentar reclamo</button>
+  }
+} @else if (auth.rolActivo() === 'trabajador') {
+  @if (s.estado === 'en_negociacion' && !pendientes(s).length) { <button class="btn" (click)="formulario('precio')">Proponer precio definitivo</button> }
+  @if ((s.estado === 'precio_fijado' || s.estado === 'agendado') && pago(s,'anticipo')?.estado === 'confirmado') {
+    <button class="btn" (click)="iniciar(s)">Iniciar trabajo</button>
+  }
+  @if (s.estado === 'en_proceso' && !pendientes(s).length) {
+    <button class="btn-sec" (click)="formulario('incremento')">Solicitar incremento</button>
+    <button class="btn" (click)="finalizar(s)">Finalizar trabajo</button>
+  }
+  @if (s.estado === 'finalizado') {
+    @if (pago(s,'saldo')?.estado === 'reportado') { <button class="btn" (click)="recepcion(s)">Confirmar recepción del saldo</button> }
+    <button class="btn-sec" (click)="formulario('evaluar')">Evaluación interna del cliente</button>
+  }
+}
+@if ((esCliente || auth.rolActivo() === 'trabajador') && (s.estado === 'en_negociacion' || s.estado === 'precio_fijado' || s.estado === 'agendado')) {
+  <button class="btn-peligro" (click)="cancelar(s)">Cancelar servicio</button>
+}
+@if (pago(s,'anticipo')?.estado === 'confirmado' && s.estado !== 'cancelado') {
+  <button class="btn-sec" (click)="contacto(s)">Obtener contacto WhatsApp</button>
+}
+</div>
+@if (!esCliente && auth.rolActivo() === 'trabajador' && s.estado !== 'cancelado' && s.estado !== 'finalizado') {
+  <button class="btn-sec" (click)="consultarReferencias(s)">Consultar referencias internas del cliente</button>
+}
+@if (referencias) {
+  <aside class="oferta"><h3>Referencias internas del cliente</h3>
+    @for (r of referencias; track $index) { <p>{{ r.valoracion }} de 5 · {{ r.descripcion }}</p> }
+    @empty { <p>Sin referencias disponibles para esta relación de servicio.</p> }
+  </aside>
+}
+@if (enlace) { <p><a [href]="enlace" target="_blank" rel="noopener noreferrer">Abrir conversación en WhatsApp</a></p> }
+@if (s.total_acordado) {
+<div class="resumen-dinero">
+  <div><small>Total acordado</small><strong>{{ s.total_acordado | currency:'BOB' }}</strong></div>
+  <div><small>Anticipo</small><strong>{{ s.monto_anticipo | currency:'BOB' }}</strong></div>
+  <div><small>Saldo previsto</small><strong>{{ s.monto_saldo | currency:'BOB' }}</strong></div>
+</div><p class="ayuda">El anticipo QR es una simulación. El saldo se paga directamente al profesional. Comisión de referencia {{ s.monto_comision | currency:'BOB' }}.</p>
+}
+<h3>Pagos registrados</h3>
+@for (p of s.pagos; track p.id) { <p>{{ p.tipo }} · {{ p.monto | currency:'BOB' }} · {{ p.estado }} · {{ p.metodo }}</p>
+<app-adjuntos tipo="pagos" [recurso]="p.id" [editar]="s.estado !== 'cancelado'" />
+}
+@empty { <p class="ayuda">Sin pagos registrados.</p> }
+<h3>Historial de precios</h3>
+@for (p of s.precios; track p.id) {
+  <article class="oferta"><strong>{{ p.tipo }} · {{ p.total | currency:'BOB' }}</strong><p>{{ p.estado }}</p>
+    @if (p.justificacion) { <p>{{ p.justificacion }}</p> }
+    @if (p.estado === 'pendiente' && esCliente) {
+      <div class="fila"><button class="btn" (click)="decidir(s,p,true)">Aceptar</button>
+      <button class="btn-peligro" (click)="decidir(s,p,false)">Rechazar y cancelar</button></div>
+    }
+  </article>
+} @empty { <p>El profesional todavía no propuso un precio definitivo.</p> }
+@if (accion) {
+<form (ngSubmit)="guardar()" class="formulario-accion">
+  <h3>Completar {{ accion }}</h3>
+  @if (accion === 'precio' || accion === 'incremento') {
+    <p class="ayuda">Introduce los nuevos importes completos, con hasta dos decimales.</p>
+    <label class="campo">Mano de obra (Bs)<input name="mano" type="number" min="0" max="99999999.99" step=".01" required [(ngModel)]="manoObra"></label>
+    <label class="campo">Materiales (Bs)<input name="material" type="number" min="0" max="99999999.99" step=".01" required [(ngModel)]="materiales"></label>
+    @if (accion === 'precio') { <label class="campo">Transporte (Bs)<input name="transporte" type="number" min="0" max="99999999.99" step=".01" required [(ngModel)]="transporte"></label> }
+  }
+  @if (accion === 'incremento' || accion === 'cancelar') {
+    <label class="campo">Justificación<textarea name="justificacion" [(ngModel)]="justificacion" maxlength="1000" required></textarea></label>
+  }
+  @if (accion === 'visita') { <label class="campo">Fecha y hora local<input name="fecha" type="datetime-local" [(ngModel)]="fecha" required></label> }
+  @if (accion === 'saldo') {
+    <label class="campo">Medio de pago<select name="metodo" [(ngModel)]="metodo"><option value="efectivo">Efectivo</option><option value="qr_acordado">QR acordado entre las partes</option></select></label>
+    <label class="fila"><input type="checkbox" name="conforme" [(ngModel)]="conforme" required>El trabajo está conforme y realicé el pago del saldo.</label>
+  }
+  @if (accion === 'calificar' || accion === 'evaluar') {
+    <label class="campo">Valoración<select name="estrellas" [(ngModel)]="estrellas">
+      @for (n of [1,2,3,4,5]; track n) { <option [ngValue]="n">{{ n }} estrellas</option> }
+    </select></label>
+  }
+  @if (accion === 'reclamo') {
+    <p class="ayuda">Los reclamos formales se admiten hasta siete días después de la finalización.</p>
+    <label class="campo">Tipo<select name="tipo" [(ngModel)]="tipo"><option value="tecnico">Técnico</option><option value="financiero">Financiero</option><option value="otro">Otro</option></select></label>
+  }
+  @if (accion === 'calificar' || accion === 'evaluar' || accion === 'reclamo') {
+    <label class="campo">Describe tu experiencia<textarea name="comentario" [(ngModel)]="comentario" maxlength="2000" required></textarea></label>
+  }
+  <div class="fila"><button class="btn">Confirmar</button><button type="button" class="btn-sec" (click)="accion=''">Cerrar</button></div>
+</form>
+}
+</section>
+}
+</fieldset>

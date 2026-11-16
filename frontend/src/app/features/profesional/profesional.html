@@ -1,0 +1,95 @@
+<header class="encabezado-pagina">
+  <div><p class="sobre-titulo">OFRECE TUS SERVICIOS</p><h1>Mi perfil profesional</h1>
+    <p>Completa tu información y verifica tu experiencia para recibir trabajos.</p></div>
+</header>
+<app-feedback [error]="error()" [mensaje]="mensaje()" [ocupado]="ocupado()" />
+<fieldset [disabled]="ocupado()" class="sin-borde">
+<section class="tarjeta">
+  <h2>Presentación</h2>
+  @if (perfil) { <p>Verificación <span class="estado-cotizacion">{{ perfil.estado_verificacion }}</span></p> }
+  <form (ngSubmit)="guardarPerfil()">
+    <label class="campo">Zona base<select name="zona" [(ngModel)]="zona" required>
+      <option value="" disabled>Selecciona tu zona</option>
+      @for (z of zonas; track z.id) { <option [value]="z.id">{{ z.nombre }}</option> }
+    </select></label>
+    <label class="campo">Experiencia y servicios<textarea name="descripcion" [(ngModel)]="descripcion" maxlength="4000"></textarea></label>
+    <button class="btn">Guardar perfil</button>
+  </form>
+</section>
+@if (perfil) {
+<div class="rejilla-formularios">
+  <section class="tarjeta"><h2>Especialidades</h2>
+    <label class="campo">Selecciona tus oficios<select multiple [(ngModel)]="especialidades" size="5">
+      @for (c of categorias; track c.id) { <option [value]="c.id">{{ c.nombre }}</option> }
+    </select></label>
+    <p class="ayuda">Puedes seleccionar varias opciones con Ctrl o Cmd.</p>
+    <button class="btn" (click)="guardarConfiguracion('especialidades')">Guardar especialidades</button>
+  </section>
+  <section class="tarjeta"><h2>Cobertura</h2>
+    <label class="campo">Zonas donde atiendes<select multiple [(ngModel)]="cobertura" size="5">
+      @for (z of zonas; track z.id) { <option [value]="z.id">{{ z.nombre }}</option> }
+    </select></label>
+    <button class="btn" (click)="guardarConfiguracion('cobertura')">Guardar cobertura</button>
+  </section>
+</div>
+<section class="tarjeta"><h2>Horario semanal</h2>
+  <form (ngSubmit)="guardarConfiguracion('horarios')">
+    @for (f of franjas; track $index) {
+      <div class="fila franja">
+        <label>Día<select [name]="'dia'+$index" [(ngModel)]="f.dia">
+          @for (d of semana; track $index) { <option [ngValue]="$index">{{ d }}</option> }
+        </select></label>
+        <label>Desde<input type="time" [name]="'inicio'+$index" [(ngModel)]="f.inicio" required></label>
+        <label>Hasta<input type="time" [name]="'fin'+$index" [(ngModel)]="f.fin" required></label>
+        <button type="button" class="btn-link" (click)="franjas.splice($index,1)">Quitar</button>
+      </div>
+    }
+    <div class="fila"><button type="button" class="btn-sec" (click)="franjas.push({dia:1,inicio:'08:00',fin:'12:00'})">Añadir franja</button>
+      <button class="btn">Guardar horario</button></div>
+  </form>
+</section>
+<section class="tarjeta"><h2>Disponibilidad</h2>
+  <p>{{ perfil.disponible ? 'Disponible para nuevas oportunidades.' : 'Tu perfil está fuera de circulación.' }}</p>
+  <button class="btn" (click)="disponibilidad()" [disabled]="!perfil.disponible && perfil.estado_verificacion !== 'aprobado'">
+    {{ perfil.disponible ? 'Dejar de recibir trabajos' : 'Recibir trabajos' }}</button>
+  <hr>
+  <form class="formulario-en-linea" (ngSubmit)="pausar()">
+    <label class="campo">Días de pausa<input type="number" name="dias" [(ngModel)]="dias" min="1" max="30" required></label>
+    <button class="btn-sec">Pausar disponibilidad</button>
+    <button type="button" class="btn-sec" (click)="reactivar()">Reactivar una pausa</button>
+  </form>
+</section>
+<section class="tarjeta"><h2>Verificación documental</h2>
+  <p class="ayuda">Adjunta identidad, antecedentes, habilidades y referencias de reputación. Archivos privados de hasta 2 MiB.</p>
+  <button class="btn-sec" (click)="solicitar()" [disabled]="perfil.estado_verificacion === 'aprobado'">Presentar solicitud de verificación</button>
+  @for (v of verificaciones; track v.id) {
+    <article class="item-detalle"><h3>Solicitud {{ v.id }} · {{ v.estado }}</h3>
+      @if (v.motivo_decision) { <p>{{ v.motivo_decision }}</p> }
+      @for (d of v.documentos; track d.id) { <p>{{ d.tipo }} · {{ d.nombre }}</p> }
+      @for (c of v.criterios; track c.criterio) { <p>{{ c.criterio }} · {{ c.resultado }} · {{ c.observaciones }}</p> }
+      @if (v.estado === 'pendiente' || v.estado === 'requiere_informacion') {
+        <label class="campo">Tipo de documento<select [(ngModel)]="tipo">
+          @for (t of tipos; track t) { <option [value]="t">{{ t }}</option> }
+        </select></label>
+        <label class="campo">Archivo<input type="file" accept=".pdf,.png,.jpg,.jpeg" (change)="seleccionar($event)"></label>
+        <button class="btn" (click)="subir(v.id)">Subir documento</button>
+      }
+      @if (v.estado === 'rechazada') {
+        <label class="campo">Motivo de apelación<textarea [(ngModel)]="motivo" maxlength="2000"></textarea></label>
+        <button class="btn-sec" (click)="apelar('verificaciones',v.id)">Apelar decisión</button>
+      }
+    </article>
+  } @empty { <p class="vacio">Todavía no presentaste documentación.</p> }
+</section>
+<section class="tarjeta"><h2>Suspensiones</h2>
+  @for (s of suspensiones; track s.id) {
+    <article class="item-detalle"><p>{{ s.motivo }} · {{ s.duracion_dias }} días · {{ s.estado }}</p>
+      @if (s.estado === 'activa' || s.estado === 'programada') {
+        <label class="campo">Motivo de apelación<textarea [(ngModel)]="motivo" maxlength="2000"></textarea></label>
+        <button class="btn-sec" (click)="apelar('suspensiones',s.id)">Apelar suspensión</button>
+      }
+    </article>
+  } @empty { <p>Sin suspensiones registradas.</p> }
+</section>
+}
+</fieldset>

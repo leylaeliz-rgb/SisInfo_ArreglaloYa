@@ -94,3 +94,37 @@ th, td { padding: .5rem; border-bottom: 1px solid var(--borde); text-align: left
 .acciones-cotizacion { display: flex; align-items: center; gap: .6rem; }
 .estado-cotizacion { padding: .25rem .6rem; background: var(--fondo); border: 1px solid var(--borde); border-radius: 2rem; font-size: .8rem; }
 @media (max-width: 640px) { .cotizacion { align-items: flex-start; flex-direction: column; } }
+
+/* Recorridos de contratación */
+.contenido { max-width: 1120px; }
+.barra { gap: 1rem; flex-wrap: wrap; }
+.barra nav { flex-wrap: wrap; gap: .8rem; }
+.sin-borde { border: 0; padding: 0; margin: 0; min-width: 0; }
+.sin-borde:disabled { opacity: .75; }
+.item-detalle { padding: 1.1rem 0; border-bottom: 1px solid var(--borde); }
+.item-detalle:last-child { border-bottom: 0; }
+.item-detalle h3 { margin: .3rem 0 .5rem; }
+.oferta { padding: .9rem; border: 1px solid var(--borde); border-radius: .5rem; margin-top: .7rem; background: #f9fbfd; }
+.acciones { margin: 1.2rem 0; gap: .7rem; }
+.franja { margin-bottom: 1rem; align-items: flex-end; }
+.franja label { display: grid; gap: .3rem; }
+.formulario-accion { padding: 1.2rem; margin-top: 1rem; background: #f5f8ff; border: 1px solid var(--borde); border-radius: .5rem; }
+.resumen-dinero { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1rem; padding: 1rem; background: #f2f6fb; border-radius: .5rem; }
+.resumen-dinero div { display: grid; gap: .4rem; }
+.resumen-dinero strong { font-size: 1.4rem; }
+.servicio-resumen { text-align: left; cursor: pointer; color: inherit; font: inherit; display: grid; align-content: start; gap: .5rem; }
+.servicio-resumen h2 { font-size: 1.15rem; }
+.servicio-resumen p { margin: .2rem 0; }
+.servicio-resumen.seleccionado { outline: 2px solid var(--primario); }
+.indicador { display: grid; gap: .6rem; }
+.indicador strong { font-size: 2.2rem; color: var(--primario); }
+.pestañas { margin-bottom: 1rem; }
+summary { cursor: pointer; font-weight: 650; padding-bottom: .7rem; }
+hr { border: 0; border-top: 1px solid var(--borde); margin: 1.2rem 0; }
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 3px solid #97bfff; outline-offset: 3px; }
+@media(max-width: 640px) {
+  .franja label { width: 100%; }
+  .encabezado-pagina h1 { font-size: 1.6rem; }
+  .tarjeta { padding: 1.1rem; }
+  .acciones button { width: 100%; }
+}

@@ -29,13 +29,38 @@ export const routes: Routes = [
   },
   {
     path: 'espacio',
+    redirectTo: 'solicitudes',
+    pathMatch: 'full',
+  },
+  {
+    path: 'admin/sanciones',
+    canActivate: [authGuard, rolGuard('administrador')],
+    loadComponent: () => import('./features/administracion/suspensiones').then((m) => m.Suspensiones),
+  },
+  {
+    path: 'profesional',
+    canActivate: [authGuard, rolGuard('trabajador')],
+    loadComponent: () => import('./features/profesional/profesional').then(m => m.PerfilProfesional),
+  },
+  {
+    path: 'solicitudes',
     canActivate: [authGuard],
-    loadComponent: () => import('./features/workspace/workspace').then((m) => m.Workspace),
+    loadComponent: () => import('./features/solicitudes/solicitudes').then(m => m.SolicitudesPage),
+  },
+  {
+    path: 'servicios',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/trabajos/trabajos').then(m => m.TrabajosPage),
+  },
+  {
+    path: 'gestion',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/gestion/gestion').then(m => m.GestionPage),
   },
   {
     path: 'admin',
     canActivate: [authGuard, rolGuard('administrador')],
-    loadComponent: () => import('./features/administracion/suspensiones').then((m) => m.Suspensiones),
+    loadComponent: () => import('./features/gestion/resumen').then(m => m.ResumenAdmin),
   },
   { path: '', pathMatch: 'full', redirectTo: 'perfil' },
   { path: '**', redirectTo: 'perfil' },

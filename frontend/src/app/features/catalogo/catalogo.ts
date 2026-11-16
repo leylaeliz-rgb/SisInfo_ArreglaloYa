@@ -19,16 +19,32 @@ import { mensajeError } from '../../core/utils/errores';
       @if (cargandoCategorias()) { <p>Cargando categorías...</p> }
       @else if (!categorias().length) { <p class="vacio">Todavía no hay categorías registradas.</p> }
       @else { <div class="rejilla-catalogo">
-        @for (c of categorias(); track c.id) { <article class="item-catalogo"><div class="icono-catalogo">{{ iconoCategoria(c.nombre) }}</div><div><h3>{{ c.nombre }}</h3><p>{{ c.descripcion || 'Servicio disponible en la plataforma.' }}</p><small>Código: {{ c.codigo }}</small></div></article> }
+        @for (c of categorias(); track c.id) { <article class="item-catalogo"><div class="icono-catalogo">{{ iconoCategoria(c.nombre) }}</div><div><h3>{{ c.nombre }}</h3><p>{{ c.descripcion || 'Servicio disponible en la plataforma.' }}</p><small>Código: {{ c.codigo }}</small>
+@if (auth.rolActivo() === 'administrador') {
+  <p>{{ c.activa ? 'Activa' : 'Desactivada' }}</p>
+  <button type="button" class="btn-sec" [disabled]="guardando()" (click)="editar('categorias',c)">Editar estado y nombre</button>
+}</div></article> }
       </div> }
     </section>
     <section class="tarjeta">
       <div class="titulo-seccion"><div><h2>Zonas de cobertura</h2><p>Ubicaciones donde se pueden solicitar servicios.</p></div><span class="contador">{{ zonas().length }} zonas</span></div>
       @if (cargandoZonas()) { <p>Cargando zonas...</p> }
       @else if (!zonas().length) { <p class="vacio">Todavía no hay zonas registradas.</p> }
-      @else { <div class="lista-zonas">@for (z of zonas(); track z.id) { <div class="zona"><span class="pin">⌖</span><span>{{ z.nombre }}</span><small>{{ etiquetaTipo(z.tipo) }}</small></div> }</div> }
+      @else { <div class="lista-zonas">@for (z of zonas(); track z.id) { <div class="zona"><span class="pin">⌖</span><span>{{ z.nombre }}</span><small>{{ etiquetaTipo(z.tipo) }}</small>
+@if (auth.rolActivo() === 'administrador') {
+  <span>{{ z.activa ? 'Activa' : 'Desactivada' }}</span>
+  <button type="button" class="btn-sec" [disabled]="guardando()" (click)="editar('zonas',z)">Editar</button>
+}</div> }</div> }
     </section>
     @if (auth.rolActivo() === 'administrador') {
+      @if (editandoId) {
+        <form class="tarjeta" (ngSubmit)="guardarEdicion()"><h2>Editar {{ editandoTipo === 'categorias' ? 'categoría' : 'zona' }}</h2>
+          <label class="campo">Nombre<input name="edicionNombre" [(ngModel)]="edicionNombre" [maxlength]="editandoTipo === 'categorias' ? 100 : 120" required></label>
+          <label class="fila"><input type="checkbox" name="edicionActiva" [(ngModel)]="edicionActiva">Activa para nuevas solicitudes</label>
+          <div class="fila"><button class="btn" [disabled]="guardando()">Guardar cambios</button>
+          <button type="button" class="btn-sec" (click)="editandoId=''">Cerrar</button></div>
+        </form>
+      }
       <section class="tarjeta"><h2>Administrar catálogo</h2><p>Registra nuevas categorías y zonas para que aparezcan en el catálogo.</p>
         <div class="rejilla-formularios">
           <form (ngSubmit)="crearCategoria()"><h3>Nueva categoría</h3>
@@ -56,6 +72,10 @@ export class Catalogo implements OnInit {
   guardando = signal(false);
   error = signal('');
   mensaje = signal('');
+  editandoId = '';
+  editandoTipo: 'categorias' | 'zonas' = 'categorias';
+  edicionNombre = '';
+  edicionActiva = true;
   codigo = '';
   nombreCategoria = '';
   nombreZona = '';
@@ -64,8 +84,8 @@ export class Catalogo implements OnInit {
   ngOnInit() { this.cargar(); }
   cargar() {
     this.error.set(''); this.cargandoCategorias.set(true); this.cargandoZonas.set(true);
-    this.api.categorias().subscribe({ next: d => this.categorias.set(d), error: e => { this.error.set(mensajeError(e)); this.cargandoCategorias.set(false); }, complete: () => this.cargandoCategorias.set(false) });
-    this.api.zonas().subscribe({ next: d => this.zonas.set(d), error: e => { this.error.set(mensajeError(e)); this.cargandoZonas.set(false); }, complete: () => this.cargandoZonas.set(false) });
+    this.api.categorias(this.auth.rolActivo() === 'administrador').subscribe({ next: d => this.categorias.set(d), error: e => { this.error.set(mensajeError(e)); this.cargandoCategorias.set(false); }, complete: () => this.cargandoCategorias.set(false) });
+    this.api.zonas(this.auth.rolActivo() === 'administrador').subscribe({ next: d => this.zonas.set(d), error: e => { this.error.set(mensajeError(e)); this.cargandoZonas.set(false); }, complete: () => this.cargandoZonas.set(false) });
   }
   crearCategoria() {
     this.limpiar(); this.guardando.set(true);
@@ -79,6 +99,22 @@ export class Catalogo implements OnInit {
     this.api.crearZona(this.nombreZona.trim(), this.tipoZona).subscribe({
       next: () => { this.mensaje.set('Zona creada correctamente.'); this.nombreZona = ''; this.cargar(); },
       error: e => { this.error.set(mensajeError(e)); this.guardando.set(false); }, complete: () => this.guardando.set(false),
+    });
+  }
+  editar(tipo: 'categorias' | 'zonas', fila: Categoria | Zona) {
+    this.editandoId = fila.id; this.editandoTipo = tipo;
+    this.edicionNombre = fila.nombre; this.edicionActiva = fila.activa ?? true;
+  }
+  guardarEdicion() {
+    if (this.guardando()) return;
+    this.limpiar(); this.guardando.set(true);
+    const operacion = this.editandoTipo === 'categorias' ?
+      this.api.editarCategoria(this.editandoId, this.edicionNombre.trim(), this.edicionActiva) :
+      this.api.editarZona(this.editandoId, this.edicionNombre.trim(), this.edicionActiva);
+    operacion.subscribe({
+      next: () => { this.editandoId = ''; this.mensaje.set('Catálogo actualizado.'); this.cargar(); },
+      error: e => { this.error.set(mensajeError(e)); this.guardando.set(false); },
+      complete: () => this.guardando.set(false),
     });
   }
   iconoCategoria(nombre: string) {

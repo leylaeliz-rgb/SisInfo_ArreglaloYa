@@ -2,8 +2,8 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 
-export interface Categoria { id: string; codigo: string; nombre: string; descripcion: string | null; }
-export interface Zona { id: string; nombre: string; tipo: string; zonaPadreId: string | null; }
+export interface Categoria { id: string; codigo: string; nombre: string; descripcion: string | null; activa?: boolean; }
+export interface Zona { id: string; nombre: string; tipo: string; zonaPadreId: string | null; activa?: boolean; }
 export interface Cotizacion {
   id: string; solicitud_id: string; trabajador_id: string;
   monto_estimado_total: string | number; moneda: string; estado: string;
@@ -19,8 +19,12 @@ export class NegocioService {
   private http = inject(HttpClient);
   private base = environment.apiUrl;
 
-  categorias() { return this.http.get<Categoria[]>(`${this.base}/catalogos/categorias`); }
-  zonas() { return this.http.get<Zona[]>(`${this.base}/catalogos/zonas`); }
+  categorias(todas = false) {
+    return this.http.get<Categoria[]>(this.base + (todas ? '/panel/categorias' : '/catalogos/categorias'));
+  }
+  zonas(todas = false) {
+    return this.http.get<Zona[]>(this.base + (todas ? '/panel/zonas' : '/catalogos/zonas'));
+  }
   crearCategoria(codigo: string, nombre: string) {
     return this.http.post(`${this.base}/catalogos/categorias`, { codigo, nombre });
   }
@@ -36,7 +40,12 @@ export class NegocioService {
 
   cotizaciones() { return this.http.get<Cotizacion[]>(`${this.base}/cotizaciones/me`); }
   enviarCotizacion(id: string, manoObra: number, materiales: number, transporte: number, requiereVisita: boolean) {
-    return this.http.post(`${this.base}/cotizaciones/solicitudes/${id}`, { manoObra, materiales, transporte, requiereVisita });
+    return this.http.post(`${this.base}/cotizaciones/solicitudes/${id}`, {
+      manoObra: String(manoObra),
+      materiales: String(materiales),
+      transporte: String(transporte),
+      requiereVisita,
+    });
   }
   retirarCotizacion(id: string) { return this.http.put(`${this.base}/cotizaciones/${id}/retiro`, {}); }
   editarCondiciones(id: string, condiciones: string) {

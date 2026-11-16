@@ -1,0 +1,93 @@
+<header class="encabezado-pagina"><div><p class="sobre-titulo">ENCUENTRA UNA SOLUCIÓN</p>
+<h1>{{ auth.rolActivo() === 'trabajador' ? 'Oportunidades de trabajo' : 'Solicitudes y profesionales' }}</h1>
+<p>Publica tu necesidad o compara las propuestas para tu hogar.</p></div>
+<button class="btn-sec" [disabled]="ocupado()" (click)="realizar(cargar.bind(this),'')">Actualizar</button></header>
+<app-feedback [error]="error()" [mensaje]="mensaje()" [ocupado]="ocupado()" />
+<fieldset class="sin-borde" [disabled]="ocupado()">
+@if (auth.rolActivo() === 'cliente') {
+<section class="tarjeta"><h2>{{ editarId ? 'Editar solicitud' : '¿Qué necesitas resolver?' }}</h2>
+<form (ngSubmit)="guardar()">
+  <div class="rejilla-formularios">
+  <label class="campo">Categoría<select name="categoria" [(ngModel)]="categoria" required [disabled]="!!editarId">
+    <option value="" disabled>Selecciona un oficio</option>
+    @for (c of categorias; track c.id) { <option [value]="c.id">{{ c.nombre }}</option> }
+  </select></label>
+  <label class="campo">Zona<select name="zona" [(ngModel)]="zona" required [disabled]="!!editarId">
+    <option value="" disabled>Selecciona tu zona</option>
+    @for (z of zonas; track z.id) { <option [value]="z.id">{{ z.nombre }}</option> }
+  </select></label></div>
+  <label class="campo">Título<input name="titulo" [(ngModel)]="titulo" maxlength="150" required></label>
+  <label class="campo">Describe el trabajo<textarea name="descripcion" [(ngModel)]="descripcion" maxlength="4000" required></textarea></label>
+  @if (!editarId) {
+    <label class="campo">Destinatario<select name="destinatario" [(ngModel)]="destinatario">
+      <option value="">Publicar para recibir ofertas</option>
+      @for (t of trabajadores; track t.id) { <option [value]="t.id">{{ t.nombre_completo }} · {{ t.zona }}</option> }
+    </select></label>
+    <label class="fila"><input type="checkbox" name="urgente" [(ngModel)]="urgente">Urgente · recargo del 10 % sobre mano de obra</label>
+  }
+  <div class="fila"><button class="btn">{{ editarId ? 'Guardar cambios' : 'Publicar solicitud' }}</button>
+    @if (editarId) { <button type="button" class="btn-sec" (click)="editarId=null;titulo='';descripcion=''">Cancelar edición</button> }
+  </div>
+</form></section>
+<details class="tarjeta"><summary>Buscar un profesional</summary>
+  <label class="campo">Nombre, oficio o experiencia<input [(ngModel)]="busqueda" type="search"></label>
+  <label class="campo">Zona base<select [(ngModel)]="filtroZona"><option value="">Todas las zonas</option>
+    @for (z of zonas; track z.id) { <option [value]="z.id">{{ z.nombre }}</option> }
+  </select></label>
+  <div class="rejilla-catalogo">
+  @for (t of profesionales; track t.id) {
+    <article class="item-detalle"><h3>{{ t.nombre_completo }}</h3><p>{{ t.descripcion || 'Profesional verificado' }}</p>
+      <p>{{ t.zona }} · {{ t.especialidades.join(' · ') }}</p>
+      <button class="btn-sec" (click)="enviarDirecta(t)">Solicitar cotización</button></article>
+  } @empty { <p>No hay profesionales disponibles para esta búsqueda.</p> }
+  </div>
+</details>
+}
+@if (seleccionada; as s) {
+<section class="tarjeta"><h2>Cotizar para {{ s.titulo }}</h2>
+<form (ngSubmit)="cotizar()">
+  <div class="rejilla-formularios">
+    <label class="campo">Mano de obra (Bs)<input name="manoObra" type="number" [(ngModel)]="manoObra" min="0" max="99999999.99" step=".01" required></label>
+    <label class="campo">Materiales (Bs)<input name="materiales" type="number" [(ngModel)]="materiales" min="0" max="99999999.99" step=".01" required></label>
+    <label class="campo">Transporte (Bs)<input name="transporte" type="number" [(ngModel)]="transporte" min="0" max="99999999.99" step=".01" required></label>
+  </div>
+  <label class="fila"><input type="checkbox" name="visita" [(ngModel)]="requiereVisita">Requiere visita de evaluación</label>
+  @if (s.urgente) { <p>El sistema añade el recargo urgente sobre la mano de obra.</p> }
+  <div class="fila"><button class="btn">Enviar cotización</button><button type="button" class="btn-sec" (click)="seleccionada=null">Cerrar</button></div>
+</form></section>
+}
+<section class="tarjeta"><h2>{{ auth.rolActivo() === 'trabajador' ? 'Solicitudes disponibles' : 'Mis solicitudes' }}</h2>
+@for (s of solicitudes; track s.id) {
+<article class="item-detalle">
+  <div class="fila"><h3>{{ s.titulo }}</h3><span class="estado-cotizacion">{{ s.estado || 'Abierta' }}</span>
+    @if (s.urgente) { <span class="estado-cotizacion">Urgente</span> }</div>
+  <p>{{ s.descripcion }}</p>
+<app-adjuntos tipo="solicitudes" [recurso]="s.id" [editar]="auth.rolActivo() === 'cliente' && (s.estado === 'publicada' || s.estado === 'recibiendo_ofertas')" /><p class="ayuda">{{ nombreCategoria(s.categoria_id) }} · {{ nombreZona(s.zona_id) }}</p>
+  @if (auth.rolActivo() === 'trabajador') { <button class="btn" (click)="seleccionada=s">Preparar cotización</button> }
+  @if (auth.rolActivo() === 'cliente' && (s.estado === 'publicada' || s.estado === 'recibiendo_ofertas')) {
+    <div class="fila">@if (!ofertasDe(s.id).length) { <button class="btn-sec" (click)="editar(s)">Editar</button> }
+      <button class="btn-peligro" (click)="cancelar(s)">Cancelar solicitud</button></div>
+  }
+  @for (o of ofertasDe(s.id); track o.id) {
+    <article class="oferta"><strong>{{ o.trabajador }}</strong>
+      <p>{{ o.monto_estimado_total | currency:'BOB':'symbol':'1.2-2' }} · {{ o.estado }}</p>
+      @if (o.condiciones) { <p>{{ o.condiciones }}</p> }
+      @if (auth.rolActivo() === 'cliente' && o.estado === 'enviada' && (s.estado === 'publicada' || s.estado === 'recibiendo_ofertas')) {
+        <button class="btn" (click)="contratar(o)">Elegir propuesta</button>
+      }
+    </article>
+  }
+</article>
+} @empty { <p class="vacio">{{ auth.rolActivo() === 'trabajador' ? 'No hay solicitudes abiertas para mostrar.' : 'Todavía no publicaste solicitudes.' }}</p> }
+</section>
+@if (auth.rolActivo() === 'trabajador') {
+<section class="tarjeta"><h2>Mis propuestas</h2>
+@for (o of ofertas; track o.id) {
+  <article class="item-detalle"><h3>{{ o.titulo }}</h3><p>{{ o.monto_estimado_total | currency:'BOB' }} · {{ o.estado }}</p>
+    @if (o.estado === 'enviada') { <button class="btn-peligro" (click)="retirar(o)">Retirar oferta</button> }
+  </article>
+} @empty { <p>Todavía no enviaste cotizaciones.</p> }
+</section>
+}
+<a routerLink="/servicios" class="btn-sec">Ir a mis servicios</a>
+</fieldset>

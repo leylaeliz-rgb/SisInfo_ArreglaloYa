@@ -1,3 +1,5 @@
+import { AdjuntosModule } from './adjuntos/adjuntos.module';
+import { PanelModule } from './panel/panel.module';
 
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
@@ -45,6 +47,8 @@ import { AdministracionModule } from './administracion/administracion.module';
         synchronize: false,
       }),
     }),
+    AdjuntosModule,
+    PanelModule,
     AuthModule,
     UsuariosModule,
     CatalogosModule,

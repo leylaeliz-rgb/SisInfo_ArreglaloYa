@@ -1,0 +1,100 @@
+<header class="encabezado-pagina"><div><p class="sobre-titulo">SEGUIMIENTO Y CONFIANZA</p>
+<h1>{{ admin ? 'Gestión administrativa' : 'Mis incidencias' }}</h1>
+<p>Consulta los antecedentes y el resultado de cada solicitud.</p></div>
+<button class="btn-sec" (click)="actualizar()" [disabled]="ocupado()">Actualizar</button></header>
+<app-feedback [error]="error()" [mensaje]="mensaje()" [ocupado]="ocupado()" />
+<div class="fila pestañas" role="group" aria-label="Secciones de gestión">
+@if (admin) { <button class="btn-sec" [class.activo]="pestana === 'verificaciones'" (click)="pestana='verificaciones'">Verificaciones</button> }
+<button class="btn-sec" [class.activo]="pestana === 'reclamos'" (click)="pestana='reclamos'">Reclamos</button>
+<button class="btn-sec" [class.activo]="pestana === 'apelaciones'" (click)="pestana='apelaciones'">Apelaciones</button>
+</div>
+<fieldset class="sin-borde" [disabled]="ocupado()">
+@if (admin && pestana === 'verificaciones') {
+<section class="tarjeta"><h2>Solicitudes de verificación</h2>
+@for (v of verificaciones; track v.id) {
+<article class="item-detalle"><h3>{{ v.nombre_completo }}</h3><p>{{ v.estado }}</p>
+<p>{{ v.documentos.length }} documentos · {{ v.criterios.length }} criterios revisados</p>
+<button class="btn-sec" (click)="seleccionado=v;observaciones='';motivo=''">Revisar expediente</button></article>
+} @empty { <p>No hay solicitudes de verificación.</p> }
+</section>
+@if (seleccionado; as v) {
+<section class="tarjeta"><h2>Expediente de {{ v.nombre_completo }}</h2>
+<p>{{ v.estado }} · {{ v.motivo_decision }}</p>
+<h3>Documentación privada</h3>
+@for (d of v.documentos; track d.id) {
+  <p><button class="btn-link" (click)="descargar(d)">Descargar {{ d.tipo }} · {{ d.nombre }}</button></p>
+} @empty { <p>El trabajador aún no adjuntó documentos.</p> }
+<h3>Criterios registrados</h3>
+@for (c of v.criterios; track c.criterio) { <p>{{ c.criterio }} · {{ c.resultado }} · {{ c.observaciones }}</p> }
+@if (v.estado === 'pendiente' || v.estado === 'en_revision' || v.estado === 'requiere_informacion') {
+<form class="formulario-accion" (ngSubmit)="revisar()"><h3>Registrar revisión de un criterio</h3>
+<label class="campo">Criterio<select name="criterio" [(ngModel)]="criterio">
+<option value="identidad">Identidad</option><option value="antecedentes">Antecedentes</option>
+<option value="habilidades">Habilidades</option><option value="reputacion">Reputación</option></select></label>
+<label class="campo">Resultado<select name="resultado" [(ngModel)]="resultado">
+<option value="aprobado">Aprobado</option><option value="rechazado">Rechazado</option>
+<option value="requiere_informacion">Requiere información</option></select></label>
+<label class="campo">Observaciones<textarea name="observaciones" [(ngModel)]="observaciones" maxlength="2000" required></textarea></label>
+<button class="btn">Guardar revisión</button></form>
+<form class="formulario-accion" (ngSubmit)="decidir()"><h3>Decisión de la solicitud</h3>
+<p class="ayuda">La aprobación requiere los cuatro criterios aprobados y su documentación.</p>
+<label class="campo">Decisión<select name="decision" [(ngModel)]="decision"><option value="aprobada">Aprobar</option>
+<option value="rechazada">Rechazar</option><option value="requiere_informacion">Solicitar información</option></select></label>
+<label class="campo">Justificación<textarea name="motivo" [(ngModel)]="motivo" maxlength="1000" required></textarea></label>
+<button class="btn">Registrar decisión</button></form>
+}
+</section>
+}
+}
+@if (pestana === 'reclamos') {
+@if (auth.rolActivo() === 'cliente') {
+<section class="tarjeta"><h2>Presentar un reclamo</h2>
+<form (ngSubmit)="presentar()">
+<label class="campo">Servicio finalizado<select name="servicio" [(ngModel)]="solicitudReclamo" required>
+<option value="" disabled>Selecciona un trabajo</option>
+@for (s of servicios; track s.id) { <option [value]="s.id">{{ s.titulo }} · {{ s.trabajador }}</option> }
+</select></label>
+<label class="campo">Tipo<select name="tipo" [(ngModel)]="tipo"><option value="tecnico">Técnico</option><option value="financiero">Financiero</option><option value="otro">Otro</option></select></label>
+<label class="campo">Hechos<textarea name="descripcion" [(ngModel)]="descripcion" maxlength="4000" required></textarea></label>
+<p class="ayuda">El plazo máximo es de siete días desde la finalización.</p><button class="btn">Presentar reclamo</button></form>
+</section>
+}
+<section class="tarjeta"><h2>{{ admin ? 'Reclamos de la plataforma' : 'Seguimiento de mis reclamos' }}</h2>
+@for (r of reclamos; track r.id) {
+<article class="item-detalle"><h3>{{ r.titulo }}</h3><p>{{ r.tipo }} · {{ r.estado }}</p>
+@if (admin) { <p>Cliente {{ r.cliente }}</p> }<p>{{ r.descripcion }}</p>
+<app-adjuntos tipo="reclamos" [recurso]="r.id" [editar]="!admin && (r.estado === 'pendiente' || r.estado === 'en_revision')" />
+@if (r.resultado) { <p><strong>Resolución</strong> {{ r.resultado }}</p> }
+@if (admin && (r.estado === 'pendiente' || r.estado === 'en_revision')) {
+<button class="btn-sec" (click)="reclamo=r;resolucion=''">Resolver</button>
+}
+@if (!admin && r.estado === 'pendiente') { <button class="btn-peligro" (click)="retirar(r)">Retirar reclamo</button> }
+</article>
+} @empty { <p>Sin reclamos registrados.</p> }
+</section>
+@if (reclamo && admin) {
+<form class="tarjeta" (ngSubmit)="resolverReclamo()"><h2>Resolver reclamo sobre {{ reclamo.titulo }}</h2>
+<label class="campo">Estado<select name="estado" [(ngModel)]="estadoResolucion"><option value="resuelto">Resuelto</option><option value="rechazado">Rechazado</option></select></label>
+<label class="campo">Resultado<textarea name="resolucion" [(ngModel)]="resolucion" maxlength="4000" required></textarea></label>
+<div class="fila"><button class="btn">Guardar resolución</button><button type="button" class="btn-sec" (click)="reclamo=null">Cerrar</button></div></form>
+}
+}
+@if (pestana === 'apelaciones') {
+<section class="tarjeta"><h2>Apelaciones</h2>
+@for (a of apelaciones; track a.id) {
+<article class="item-detalle"><h3>{{ a.suspension_id ? 'Suspensión' : 'Verificación' }} · {{ a.nombre_completo }}</h3>
+<p>{{ a.estado }} · {{ a.motivo }}</p>@if (a.decision) { <p><strong>Decisión</strong> {{ a.decision }}</p> }
+@if (admin && (a.estado === 'presentada' || a.estado === 'en_revision')) {
+<button class="btn-sec" (click)="apelacion=a;resolucion=''">Evaluar apelación</button>
+}</article>
+} @empty { <p>No hay apelaciones. Puedes presentar una desde tu perfil profesional cuando corresponda.</p> }
+</section>
+@if (apelacion && admin) {
+<form class="tarjeta" (ngSubmit)="resolverApelacion()"><h2>Resolver apelación</h2>
+<p>{{ apelacion.motivo }}</p>
+<label class="campo">Decisión<select name="estado" [(ngModel)]="estadoApelacion"><option value="aceptada">Aceptar</option><option value="rechazada">Rechazar</option></select></label>
+<label class="campo">Justificación<textarea name="resolucion" [(ngModel)]="resolucion" maxlength="2000" required></textarea></label>
+<div class="fila"><button class="btn">Registrar decisión</button><button type="button" class="btn-sec" (click)="apelacion=null">Cerrar</button></div></form>
+}
+}
+</fieldset>
