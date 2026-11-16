@@ -2,8 +2,11 @@
 <header class="barra">
   <a routerLink="/" class="marca">Arréglalo Ya</a>
   <nav>
+    <a routerLink="/catalogo" routerLinkActive="activo">Catálogo</a>
     @if (auth.autenticado()) {
-      <a routerLink="/perfil" routerLinkActive="activo">Perfil</a>\n      <a routerLink="/espacio" routerLinkActive="activo">Servicios</a>
+      <a routerLink="/perfil" routerLinkActive="activo">Perfil</a>
+      <a routerLink="/calificaciones" routerLinkActive="activo">Calificaciones</a>
+      <a routerLink="/espacio" routerLinkActive="activo">Cotizaciones</a>
       @if (auth.rolActivo() === 'administrador') {
         <a routerLink="/admin" routerLinkActive="activo">Administración</a>
       }

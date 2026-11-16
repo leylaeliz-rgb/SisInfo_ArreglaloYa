@@ -27,3 +27,12 @@ Thumbs.db
 *.tmp
 *.bak
 *.swp
+
+# Angular cache
+frontend/.angular/
+
+# Angular build
+frontend/dist/
+
+# Dependencies
+frontend/node_modules/
