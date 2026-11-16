@@ -27,3 +27,7 @@ Thumbs.db
 *.tmp
 *.bak
 *.swp
+
+# Angular
+.angular/
+dist/
