@@ -38,3 +38,12 @@ input, select { padding: .5rem; border: 1px solid var(--borde); border-radius: .
 .fila { display: flex; gap: .5rem; flex-wrap: wrap; align-items: center; }
 .error { color: var(--error); }
 .exito { color: var(--ok); }
+textarea { width: 100%; min-height: 5rem; padding: .5rem; border: 1px solid var(--borde); border-radius: .35rem; font: inherit; }
+input[type="checkbox"] { width: auto; }
+.ayuda { color: #57606a; font-size: .9rem; }
+table { width: 100%; border-collapse: collapse; }
+th, td { padding: .5rem; border-bottom: 1px solid var(--borde); text-align: left; }
+@media (max-width: 640px) {
+  .barra { align-items: flex-start; flex-direction: column; gap: .75rem; }
+  .barra nav { flex-wrap: wrap; gap: .65rem; }
+}

@@ -3,7 +3,7 @@
   <a routerLink="/" class="marca">Arréglalo Ya</a>
   <nav>
     @if (auth.autenticado()) {
-      <a routerLink="/perfil" routerLinkActive="activo">Perfil</a>
+      <a routerLink="/perfil" routerLinkActive="activo">Perfil</a>\n      <a routerLink="/espacio" routerLinkActive="activo">Servicios</a>
       @if (auth.rolActivo() === 'administrador') {
         <a routerLink="/admin" routerLinkActive="activo">Administración</a>
       }
