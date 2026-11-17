@@ -14,4 +14,12 @@ export class OperacionesUsuariosService {
   inscribirseComoTrabajador(usuarioId: string) {
     return this.repositorio.inscribirseComoTrabajador(usuarioId);
   }
+
+  aceptarTerminos(usuarioId: string, version: string, ip: string | null) {
+    return this.repositorio.aceptarTerminos(usuarioId, version, ip);
+  }
+
+  terminosAceptados(usuarioId: string) {
+    return this.repositorio.terminosAceptados(usuarioId);
+  }
 }

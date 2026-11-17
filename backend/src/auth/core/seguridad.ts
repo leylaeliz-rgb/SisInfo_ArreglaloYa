@@ -17,10 +17,15 @@ export interface CuentasAuth {
   buscar(id: string): Promise<{ id: string; roles: string[] } | undefined>;
   credenciales(telefono: string): Promise<{ id: string; roles: string[]; passwordHash: string } | undefined>;
   crear(nombre: string, telefono: string, hash: string, rol: string): Promise<{ id: string; roles: string[] }>;
+  hashDe(id: string): Promise<string | undefined>;
+  cambiarHash(id: string, hashAnterior: string, hashNuevo: string): Promise<boolean>;
+  credencialesInactivas(telefono: string): Promise<{ id: string; passwordHash: string } | undefined>;
+  reactivar(id: string): Promise<boolean>;
 }
 
 export class CredencialesInvalidas extends Error {}
 export class RolNoAsignado extends Error {}
+export class PasswordActualIncorrecta extends Error {}
 
 export interface RevocacionesSesion {
   existe(sesionId: string): Promise<boolean>;

@@ -56,4 +56,38 @@ export class CuentasTypeOrmRepository implements CuentasRepository {
       throw error;
     }
   }
+
+  async hashDe(id: string): Promise<string | undefined> {
+    const [fila] = await this.db.query(
+      `SELECT password_hash AS "passwordHash" FROM usuarios WHERE id = $1 AND estado_cuenta = 'activa'`, [id],
+    );
+    return fila?.passwordHash;
+  }
+
+  async cambiarHash(id: string, hashAnterior: string, hashNuevo: string): Promise<boolean> {
+    const filas = await this.db.query(
+      `UPDATE usuarios SET password_hash = $3, actualizado_en = NOW()
+       WHERE id = $1 AND estado_cuenta = 'activa' AND password_hash = $2
+       RETURNING id`,
+      [id, hashAnterior, hashNuevo],
+    );
+    return filas.length > 0;
+  }
+
+  async credencialesInactivas(telefono: string): Promise<{ id: string; passwordHash: string } | undefined> {
+    const [fila] = await this.db.query(
+      `SELECT id, password_hash AS "passwordHash" FROM usuarios
+       WHERE telefono = $1 AND estado_cuenta = 'inactiva'`, [telefono],
+    );
+    return fila;
+  }
+
+  async reactivar(id: string): Promise<boolean> {
+    const filas = await this.db.query(
+      `UPDATE usuarios SET estado_cuenta = 'activa', actualizado_en = NOW()
+       WHERE id = $1 AND estado_cuenta = 'inactiva'
+       RETURNING id`, [id],
+    );
+    return filas.length > 0;
+  }
 }

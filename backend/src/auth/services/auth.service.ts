@@ -1,4 +1,4 @@
-import { CredencialesInvalidas, CuentasAuth, Identidad, RolNoAsignado, Seguridad, RevocacionesSesion } from '../core/seguridad';
+import { CredencialesInvalidas, CuentasAuth, Identidad, PasswordActualIncorrecta, RolNoAsignado, Seguridad, RevocacionesSesion } from '../core/seguridad';
 
 export class AuthService {
   constructor(private readonly cuentas: CuentasAuth, private readonly seguridad: Seguridad, private readonly revocaciones: RevocacionesSesion) {}
@@ -13,6 +13,29 @@ export class AuthService {
       throw new CredencialesInvalidas();
     }
     return this.emitir(cuenta.id, cuenta.roles.includes('cliente') ? 'cliente' : cuenta.roles[0]);
+  }
+
+  /** Reactiva una cuenta dada de baja voluntaria ('inactiva') y abre sesión. */
+  async reactivar(telefono: string, password: string) {
+    const cuenta = await this.cuentas.credencialesInactivas(telefono);
+    if (
+      !cuenta ||
+      !(await this.seguridad.comprobar(password, cuenta.passwordHash)) ||
+      !(await this.cuentas.reactivar(cuenta.id))
+    ) {
+      throw new CredencialesInvalidas();
+    }
+    return this.login(telefono, password);
+  }
+
+  async cambiarPassword(usuarioId: string, actual: string, nueva: string) {
+    const hashActual = await this.cuentas.hashDe(usuarioId);
+    if (!hashActual || !(await this.seguridad.comprobar(actual, hashActual))) {
+      throw new PasswordActualIncorrecta();
+    }
+    const cambiada = await this.cuentas.cambiarHash(usuarioId, hashActual, await this.seguridad.hash(nueva));
+    // false: la contraseña cambió entre la comprobación y la escritura; se pide repetir la operación.
+    if (!cambiada) throw new PasswordActualIncorrecta();
   }
 
   async autenticar(token: string): Promise<Identidad> {
