@@ -1,6 +1,6 @@
 import { BadRequestException, Body, ConflictException, Controller, ForbiddenException, HttpCode, Patch, Post, Req, UnauthorizedException, UseGuards } from '@nestjs/common';
 import { TelefonoDuplicado } from '../../usuarios/core/cuenta';
-import { CredencialesInvalidas, RolNoAsignado } from '../core/seguridad';
+import { CredencialesInvalidas, PasswordActualIncorrecta, RolNoAsignado } from '../core/seguridad';
 import { AuthService } from '../services/auth.service';
 import { AuthGuard } from './auth.guard';
 import type { SolicitudAutenticada } from './auth.guard';
@@ -35,6 +35,43 @@ export class AuthController {
       return await this.auth.login(telefono, password);
     } catch (error) {
       if (error instanceof CredencialesInvalidas) throw new UnauthorizedException('Credenciales inválidas.');
+      throw error;
+    }
+  }
+
+  @Post('reactivar')
+  @HttpCode(200)
+  async reactivar(@Body() cuerpo: Record<string, unknown> | undefined) {
+    const { telefono, password } = this.credenciales(cuerpo);
+    try {
+      return await this.auth.reactivar(telefono, password);
+    } catch (error) {
+      if (error instanceof CredencialesInvalidas) throw new UnauthorizedException('Credenciales inválidas.');
+      throw error;
+    }
+  }
+
+  @Patch('password')
+  @UseGuards(AuthGuard)
+  @HttpCode(204)
+  async cambiarPassword(
+    @Req() solicitud: SolicitudAutenticada,
+    @Body() cuerpo: Record<string, unknown> | undefined,
+  ) {
+    const { passwordActual, passwordNueva } = cuerpo ?? {};
+    if (typeof passwordActual !== 'string' || !passwordActual || passwordActual.length > 128 ||
+        typeof passwordNueva !== 'string' || passwordNueva.length < 8 || passwordNueva.length > 128) {
+      throw new BadRequestException('Revisa la contraseña actual y la nueva (mínimo 8 caracteres).');
+    }
+    if (passwordNueva === passwordActual) {
+      throw new BadRequestException('La contraseña nueva debe ser distinta de la actual.');
+    }
+    try {
+      await this.auth.cambiarPassword(solicitud.user.sub, passwordActual, passwordNueva);
+    } catch (error) {
+      if (error instanceof PasswordActualIncorrecta) {
+        throw new BadRequestException('La contraseña actual es incorrecta.');
+      }
       throw error;
     }
   }
