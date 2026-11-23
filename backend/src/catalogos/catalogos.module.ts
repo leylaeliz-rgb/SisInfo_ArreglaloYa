@@ -1,10 +1,9 @@
 import { Module } from '@nestjs/common';
 import { CatalogosController } from './api/catalogos.controller';
-import { CatalogosTypeOrmRepository } from './infrastructure/catalogos.typeorm-repository';
-import { ConsultarCatalogosService } from './services/consultar-catalogos.service';
-
 import { OperacionesCatalogosController } from './api/operaciones.controller';
+import { CatalogosTypeOrmRepository } from './infrastructure/catalogos.typeorm-repository';
 import { OperacionesCatalogosTypeOrmRepository } from './infrastructure/operaciones.repository';
+import { ConsultarCatalogosService } from './services/consultar-catalogos.service';
 import { OperacionesCatalogosService } from './services/operaciones.service';
 
 @Module({
@@ -20,7 +19,7 @@ import { OperacionesCatalogosService } from './services/operaciones.service';
     {
       provide: ConsultarCatalogosService,
       inject: [CatalogosTypeOrmRepository],
-      useFactory: (repositorio: CatalogosTypeOrmRepository) => new ConsultarCatalogosService(repositorio),
+      useFactory: (repo: CatalogosTypeOrmRepository) => new ConsultarCatalogosService(repo),
     },
   ],
   exports: [ConsultarCatalogosService],

@@ -62,6 +62,6 @@ export const routes: Routes = [
     canActivate: [authGuard, rolGuard('administrador')],
     loadComponent: () => import('./features/gestion/resumen').then(m => m.ResumenAdmin),
   },
-  { path: '', pathMatch: 'full', redirectTo: 'perfil' },
-  { path: '**', redirectTo: 'perfil' },
+  { path: '', pathMatch: 'full', redirectTo: 'catalogo' },
+  { path: '**', redirectTo: 'catalogo' },
 ];

@@ -12,6 +12,14 @@ export interface Zona {
   zonaPadreId: string | null;
 }
 
+export interface CategoriaAdmin extends Categoria {
+  activa: boolean;
+}
+
+export interface ZonaAdmin extends Zona {
+  activa: boolean;
+}
+
 export interface CatalogosRepository {
   listarCategorias(): Promise<Categoria[]>;
   listarZonas(): Promise<Zona[]>;
