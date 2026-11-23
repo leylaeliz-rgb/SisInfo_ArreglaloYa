@@ -14,7 +14,11 @@ interface Suspension {
   imports: [FormsModule, DatePipe, Feedback],
   template: `
     <header class="encabezado-pagina"><div><p class="sobre-titulo">CONDUCTA Y CUMPLIMIENTO</p><h1>Incidencias y suspensiones</h1>
-    <p>Revisa los hechos antes de aplicar una medida.</p></div><button class="btn-sec" (click)="actualizar()" [disabled]="ocupado()">Actualizar</button></header>
+    <p>Revisa los hechos antes de aplicar una medida.</p></div>
+    <button class="btn-actualizar" (click)="actualizar()" [disabled]="ocupado()">
+      <span>Actualizar</span>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"></path><path d="M3 12a9 9 0 0 1 15-6.7L21 8"></path><path d="M3 22v-6h6"></path><path d="M21 12a9 9 0 0 1-15 6.7L3 16"></path></svg>
+    </button></header>
     <app-feedback [error]="error()" [mensaje]="mensaje()" [ocupado]="ocupado()" />
     <fieldset class="sin-borde" [disabled]="ocupado()">
     <form class="tarjeta" (ngSubmit)="registrar()"><h2>Registrar incidencia</h2>

@@ -10,9 +10,16 @@ import { mensajeError } from '../../core/utils/errores';
   selector: 'app-perfil',
   imports: [FormsModule],
   template: `
+    <header class="encabezado-pagina">
+      <div>
+        <p class="sobre-titulo">CUENTA Y SEGURIDAD</p>
+        <h1>Mi perfil</h1>
+        <p>Administra tus datos personales, roles activos y credenciales de acceso.</p>
+      </div>
+    </header>
     @if (cuenta(); as c) {
       <section class="tarjeta">
-        <h1>Mi perfil</h1>
+        <h2>Datos de la cuenta</h2>
         <p><b>Teléfono:</b> {{ c.telefono }}</p>
 
         <form (ngSubmit)="guardarNombre()">
