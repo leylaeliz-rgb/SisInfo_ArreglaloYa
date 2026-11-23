@@ -1,13 +1,13 @@
-import { CatalogosRepository } from '../core/catalogos.repository';
+import type { CatalogosRepository, Categoria, Zona } from '../core/catalogos.repository';
 
 export class ConsultarCatalogosService {
   constructor(private readonly catalogos: CatalogosRepository) {}
 
-  listarCategorias() {
+  listarCategorias(): Promise<Categoria[]> {
     return this.catalogos.listarCategorias();
   }
 
-  listarZonas() {
+  listarZonas(): Promise<Zona[]> {
     return this.catalogos.listarZonas();
   }
 }

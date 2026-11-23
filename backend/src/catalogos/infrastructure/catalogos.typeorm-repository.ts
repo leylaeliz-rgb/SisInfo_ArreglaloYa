@@ -14,7 +14,10 @@ export class CatalogosTypeOrmRepository implements CatalogosRepository {
 
   listarZonas(): Promise<Zona[]> {
     return this.dataSource.query(
-      'SELECT id::text, nombre, tipo, zona_padre_id::text AS "zonaPadreId" FROM zonas WHERE activa ORDER BY nombre, id',
+      `SELECT id::text, nombre, tipo, zona_padre_id::text AS "zonaPadreId"
+         FROM zonas
+        WHERE activa
+        ORDER BY CASE tipo WHEN 'macrodistrito' THEN 1 WHEN 'zona' THEN 2 ELSE 3 END, nombre, id`,
     );
   }
 }
