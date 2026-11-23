@@ -8,44 +8,67 @@ import { mensajeError } from '../../core/utils/errores';
   selector: 'app-catalogo',
   imports: [FormsModule],
   template: `
-    <section class="encabezado-pagina">
-      <div><p class="sobre-titulo">ARRÉGLALO YA</p><h1>Catálogo de servicios</h1><p>Consulta los tipos de trabajo y las zonas de cobertura disponibles.</p></div>
-      <button class="btn-sec" type="button" (click)="cargar()">Actualizar catálogo</button>
+    <section class="catalogo-hero">
+      <div class="hero-contenido">
+        <p class="sobre-titulo">ARRÉGLALO YA · SERVICIOS PARA TU HOGAR</p>
+        <h1>¿Qué necesitas <span>arreglar</span> hoy?</h1>
+        <p class="hero-descripcion">Encuentra a la persona indicada para ayudarte en casa. Elige el servicio que necesitas y empieza por aquí.</p>
+        <div class="hero-detalles"><span>✦ Soluciones para tu hogar</span><span>✦ Profesionales independientes</span></div>
+      </div>
+      <div class="hero-ilustracion" aria-hidden="true"><div class="hero-circulo">⌂</div><span class="hero-destello destello-uno">✳</span><span class="hero-destello destello-dos">✦</span></div>
     </section>
+
     @if (error()) { <p class="alerta error">{{ error() }}</p> }
     @if (mensaje()) { <p class="alerta exito">{{ mensaje() }}</p> }
-    <section class="tarjeta">
-      <div class="titulo-seccion"><div><h2>Servicios disponibles</h2><p>Especialidades que puedes solicitar o brindar.</p></div><span class="contador">{{ categorias().length }} categorías</span></div>
-      @if (cargandoCategorias()) { <p>Cargando categorías...</p> }
-      @else if (!categorias().length) { <p class="vacio">Todavía no hay categorías registradas.</p> }
-      @else { <div class="rejilla-catalogo">
-        @for (c of categorias(); track c.id) { <article class="item-catalogo"><div class="icono-catalogo">{{ iconoCategoria(c.nombre) }}</div><div><h3>{{ c.nombre }}</h3><p>{{ c.descripcion || 'Servicio disponible en la plataforma.' }}</p><small>Código: {{ c.codigo }}</small>
-@if (auth.rolActivo() === 'administrador') {
-  <p>{{ c.activa ? 'Activa' : 'Desactivada' }}</p>
-  <button type="button" class="btn-sec" [disabled]="guardando()" (click)="editar('categorias',c)">Editar estado y nombre</button>
-}</div></article> }
-      </div> }
+
+    <section class="seccion-servicios">
+      <div class="titulo-seccion">
+        <div><p class="sobre-titulo">ENCUENTRA TU SOLUCIÓN</p><h2>¿En qué podemos ayudarte?</h2><p>Explora nuestras especialidades para el cuidado de tu hogar.</p></div>
+        <button class="btn-sec" type="button" (click)="cargar()">↻ Actualizar</button>
+      </div>
+      @if (cargandoCategorias()) { <p class="vacio">Preparando los servicios...</p> }
+      @else if (!categorias().length) { <div class="tarjeta vacio">Todavía no hay servicios registrados. Vuelve a intentarlo más tarde.</div> }
+      @else {
+        <div class="rejilla-catalogo">
+          @for (c of categorias(); track c.id) {
+            <article class="item-catalogo">
+              <div class="icono-catalogo">{{ iconoCategoria(c.nombre) }}</div>
+              <div class="servicio-contenido">
+                <h3>{{ c.nombre }}</h3>
+                <p>{{ c.descripcion || 'Un profesional puede ayudarte con este servicio.' }}</p>
+                <span class="servicio-disponible"><i></i> Servicio disponible</span>
+                @if (auth.rolActivo() === 'administrador') {
+                  <small>Código: {{ c.codigo }} · {{ c.activa ? 'Activa' : 'Desactivada' }}</small>
+                  <button type="button" class="btn-sec" [disabled]="guardando()" (click)="editar('categorias',c)">Editar categoría</button>
+                }
+              </div>
+              <span class="servicio-flecha" aria-hidden="true">↗</span>
+            </article>
+          }
+        </div>
+      }
     </section>
-    <section class="tarjeta">
-      <div class="titulo-seccion"><div><h2>Zonas de cobertura</h2><p>Ubicaciones donde se pueden solicitar servicios.</p></div><span class="contador">{{ zonas().length }} zonas</span></div>
+
+    <section class="tarjeta seccion-zonas">
+      <div class="titulo-seccion"><div><p class="sobre-titulo">COBERTURA</p><h2>Estamos cerca de tu hogar</h2><p>Estas son las zonas donde puedes solicitar servicios.</p></div><span class="contador">{{ zonas().length }} zonas</span></div>
       @if (cargandoZonas()) { <p>Cargando zonas...</p> }
       @else if (!zonas().length) { <p class="vacio">Todavía no hay zonas registradas.</p> }
       @else { <div class="lista-zonas">@for (z of zonas(); track z.id) { <div class="zona"><span class="pin">⌖</span><span>{{ z.nombre }}</span><small>{{ etiquetaTipo(z.tipo) }}</small>
-@if (auth.rolActivo() === 'administrador') {
-  <span>{{ z.activa ? 'Activa' : 'Desactivada' }}</span>
-  <button type="button" class="btn-sec" [disabled]="guardando()" (click)="editar('zonas',z)">Editar</button>
-}</div> }</div> }
+        @if (auth.rolActivo() === 'administrador') {
+          <span>{{ z.activa ? 'Activa' : 'Desactivada' }}</span>
+          <button type="button" class="btn-sec" [disabled]="guardando()" (click)="editar('zonas',z)">Editar</button>
+        }</div> }</div> }
     </section>
+
     @if (auth.rolActivo() === 'administrador') {
       @if (editandoId) {
-        <form class="tarjeta" (ngSubmit)="guardarEdicion()"><h2>Editar {{ editandoTipo === 'categorias' ? 'categoría' : 'zona' }}</h2>
+        <form class="tarjeta formulario-admin" (ngSubmit)="guardarEdicion()"><h2>Editar {{ editandoTipo === 'categorias' ? 'categoría' : 'zona' }}</h2>
           <label class="campo">Nombre<input name="edicionNombre" [(ngModel)]="edicionNombre" [maxlength]="editandoTipo === 'categorias' ? 100 : 120" required></label>
           <label class="fila"><input type="checkbox" name="edicionActiva" [(ngModel)]="edicionActiva">Activa para nuevas solicitudes</label>
-          <div class="fila"><button class="btn" [disabled]="guardando()">Guardar cambios</button>
-          <button type="button" class="btn-sec" (click)="editandoId=''">Cerrar</button></div>
+          <div class="fila"><button class="btn">Guardar cambios</button><button type="button" class="btn-sec" (click)="editandoId=''">Cerrar</button></div>
         </form>
       }
-      <section class="tarjeta"><h2>Administrar catálogo</h2><p>Registra nuevas categorías y zonas para que aparezcan en el catálogo.</p>
+      <section class="tarjeta formulario-admin"><p class="sobre-titulo">PANEL DE CONTROL</p><h2>Administrar catálogo</h2><p>Registra nuevas categorías y zonas para que aparezcan en el catálogo.</p>
         <div class="rejilla-formularios">
           <form (ngSubmit)="crearCategoria()"><h3>Nueva categoría</h3>
             <label class="campo">Código<input name="codigo" [(ngModel)]="codigo" maxlength="40" required placeholder="Ej. PLOMERIA"></label>
@@ -60,7 +83,7 @@ import { mensajeError } from '../../core/utils/errores';
         </div>
       </section>
     }
-  `,
+  `
 })
 export class Catalogo implements OnInit {
   auth = inject(AuthService);
