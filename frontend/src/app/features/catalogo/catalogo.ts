@@ -10,7 +10,10 @@ import { mensajeError } from '../../core/utils/errores';
   template: `
     <section class="encabezado-pagina">
       <div><p class="sobre-titulo">ARRÉGLALO YA</p><h1>Catálogo de servicios</h1><p>Consulta los tipos de trabajo y las zonas de cobertura disponibles.</p></div>
-      <button class="btn-sec" type="button" (click)="cargar()">Actualizar catálogo</button>
+      <button class="btn-actualizar" type="button" (click)="cargar()">
+        <span>Actualizar catálogo</span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"></path><path d="M3 12a9 9 0 0 1 15-6.7L21 8"></path><path d="M3 22v-6h6"></path><path d="M21 12a9 9 0 0 1-15 6.7L3 16"></path></svg>
+      </button>
     </section>
     @if (error()) { <p class="alerta error">{{ error() }}</p> }
     @if (mensaje()) { <p class="alerta exito">{{ mensaje() }}</p> }
@@ -19,8 +22,7 @@ import { mensajeError } from '../../core/utils/errores';
       @if (cargandoCategorias()) { <p>Cargando categorías...</p> }
       @else if (!categorias().length) { <p class="vacio">Todavía no hay categorías registradas.</p> }
       @else { <div class="rejilla-catalogo">
-        @for (c of categorias(); track c.id) { <article class="item-catalogo"><div class="icono-catalogo">{{ iconoCategoria(c.nombre) }}</div><div><h3>{{ c.nombre }}</h3><p>{{ c.descripcion || 'Servicio disponible en la plataforma.' }}</p><small>Código: {{ c.codigo }}</small>
-@if (auth.rolActivo() === 'administrador') {
+      @for (c of categorias(); track c.id) { <article class="item-catalogo" [attr.data-codigo]="c.codigo"><div class="icono-catalogo">{{ iconoCategoria(c.nombre) }}</div><div><h3>{{ c.nombre }}</h3><p>{{ c.descripcion || 'Servicio disponible en la plataforma.' }}</p><small class="badge-codigo">Código: {{ c.codigo }}</small>@if (auth.rolActivo() === 'administrador') {
   <p>{{ c.activa ? 'Activa' : 'Desactivada' }}</p>
   <button type="button" class="btn-sec" [disabled]="guardando()" (click)="editar('categorias',c)">Editar estado y nombre</button>
 }</div></article> }
@@ -30,8 +32,7 @@ import { mensajeError } from '../../core/utils/errores';
       <div class="titulo-seccion"><div><h2>Zonas de cobertura</h2><p>Ubicaciones donde se pueden solicitar servicios.</p></div><span class="contador">{{ zonas().length }} zonas</span></div>
       @if (cargandoZonas()) { <p>Cargando zonas...</p> }
       @else if (!zonas().length) { <p class="vacio">Todavía no hay zonas registradas.</p> }
-      @else { <div class="lista-zonas">@for (z of zonas(); track z.id) { <div class="zona"><span class="pin">⌖</span><span>{{ z.nombre }}</span><small>{{ etiquetaTipo(z.tipo) }}</small>
-@if (auth.rolActivo() === 'administrador') {
+      @else { <div class="lista-zonas">@for (z of zonas(); track z.id) { <div class="zona"><span class="pin" aria-hidden="true"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 0 1 0-5 2.5 2.5 0 0 1 0 5z"/></svg></span><span class="zona-nombre">{{ z.nombre }}</span><small>{{ etiquetaTipo(z.tipo) }}</small>@if (auth.rolActivo() === 'administrador') {
   <span>{{ z.activa ? 'Activa' : 'Desactivada' }}</span>
   <button type="button" class="btn-sec" [disabled]="guardando()" (click)="editar('zonas',z)">Editar</button>
 }</div> }</div> }

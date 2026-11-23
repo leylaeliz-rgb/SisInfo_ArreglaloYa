@@ -13,7 +13,11 @@ interface Resumen {
   imports: [FormsModule, RouterLink, Feedback],
   template: `
     <header class="encabezado-pagina"><div><p class="sobre-titulo">VISIÓN GENERAL</p><h1>Panel de administración</h1>
-      <p>Actividad registrada en la plataforma.</p></div><button class="btn-sec" (click)="actualizar()" [disabled]="ocupado()">Actualizar</button></header>
+      <p>Actividad registrada en la plataforma.</p></div>
+      <button class="btn-actualizar" (click)="actualizar()" [disabled]="ocupado()">
+        <span>Actualizar</span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"></path><path d="M3 12a9 9 0 0 1 15-6.7L21 8"></path><path d="M3 22v-6h6"></path><path d="M21 12a9 9 0 0 1-15 6.7L3 16"></path></svg>
+      </button></header>
     <app-feedback [error]="error()" [mensaje]="mensaje()" [ocupado]="ocupado()" />
     <form class="tarjeta formulario-en-linea" (ngSubmit)="actualizar()">
       <label class="campo">Desde<input type="date" name="desde" [(ngModel)]="desde"></label>
