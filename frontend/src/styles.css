@@ -169,3 +169,22 @@ button:focus-visible, a:focus-visible { outline: 3px solid rgba(255,154,77,.55);
   .cotizacion { align-items: flex-start; flex-direction: column; }
 }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; } }
+
+.btn-actualizar {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--primario);
+  color: #ffffff;
+  border: 0;
+  border-radius: 10px;
+  padding: 0.6rem 1.15rem;
+  font-size: 0.92rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+  white-space: nowrap;
+}
+.btn-actualizar:hover:not(:disabled) { background: var(--primario-hover); }
+.btn-actualizar:disabled { opacity: 0.6; cursor: not-allowed; }
+
