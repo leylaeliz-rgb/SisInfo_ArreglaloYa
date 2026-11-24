@@ -1,6 +1,7 @@
-import { Controller, Get, ForbiddenException, Req, UseGuards } from '@nestjs/common';
+import { Controller, Get, Req, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '../../auth/api/auth.guard';
 import type { SolicitudAutenticada } from '../../auth/api/auth.guard';
+import { exigirRol } from '../../shared/api/validacion';
 import { ConsultarAdministracionService } from '../services/consultar.service';
 
 @Controller('administracion')
@@ -10,10 +11,7 @@ export class AdministracionController {
 
   @Get('suspensiones')
   listar(@Req() solicitud: SolicitudAutenticada) {
-    if (!solicitud.user.roles.includes('administrador')) {
-      throw new ForbiddenException();
-    }
-
+    exigirRol(solicitud.user.rolActivo, 'administrador');
     return this.consulta.listar();
   }
 }

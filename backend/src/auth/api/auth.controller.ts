@@ -67,13 +67,14 @@ export class AuthController {
       throw new BadRequestException('La contraseña nueva debe ser distinta de la actual.');
     }
     try {
-      await this.auth.cambiarPassword(solicitud.user.sub, passwordActual, passwordNueva);
-    } catch (error) {
-      if (error instanceof PasswordActualIncorrecta) {
-        throw new BadRequestException('La contraseña actual es incorrecta.');
-      }
-      throw error;
+    await this.auth.cambiarPassword(solicitud.user.sub, passwordActual, passwordNueva);
+    await this.auth.cerrarSesion(solicitud.user);
+  } catch (error) {
+    if (error instanceof PasswordActualIncorrecta) {
+      throw new BadRequestException('La contraseña actual es incorrecta.');
     }
+    throw error;
+  }
   }
 
   @Patch('active-role')
@@ -96,11 +97,13 @@ export class AuthController {
   }
 
   private credenciales(cuerpo: Record<string, unknown> | undefined) {
-    const { telefono, password } = cuerpo ?? {};
-    if (typeof telefono !== 'string' || !/^\+?[0-9]{7,19}$/.test(telefono) ||
-        typeof password !== 'string' || !password || password.length > 128) {
-      throw new BadRequestException('Revisa el teléfono y la contraseña.');
-    }
-    return { telefono, password };
+  const { telefono, password } = cuerpo ?? {};
+  if (typeof telefono !== 'string' || !/^\+?[0-9]{7,19}$/.test(telefono.trim()) ||
+      typeof password !== 'string' || !password || password.length > 128) {
+    throw new BadRequestException('Revisa el teléfono y la contraseña.');
   }
+  const limpio = telefono.trim();
+  const normalizado = /^\+591[67][0-9]{7}$/.test(limpio) ? limpio.slice(4) : limpio;
+  return { telefono: normalizado, password };
+}
 }
