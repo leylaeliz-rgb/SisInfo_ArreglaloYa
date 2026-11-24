@@ -25,13 +25,20 @@ export class OperacionesCalificacionesTypeOrmRepository implements OperacionesCa
   }
 
   async reputacion(usuarioId: string, recursoId: string): Promise<ResultadoCalificaciones | undefined> {
-    const [fila] = await this.db.query(
-      `SELECT COUNT(c.id)::int AS total, ROUND(AVG(c.estrellas),2) AS promedio
-FROM perfiles_trabajador p LEFT JOIN calificaciones_trabajador c ON c.trabajador_id=p.usuario_id AND c.retirada_en IS NULL
-WHERE p.usuario_id=$2 AND p.estado_verificacion='aprobado' AND $1::bigint IS NOT NULL GROUP BY p.usuario_id`,
-      [usuarioId, recursoId],
-    );
-    return fila;
+  const [fila] = await this.db.query(
+    `SELECT
+       COUNT(c.id)::int AS total,
+       ROUND(AVG(c.estrellas), 2) AS promedio,
+       COUNT(c.id) FILTER (WHERE c.estrellas = 5)::int AS cinco_estrellas,
+       COUNT(c.id) FILTER (WHERE c.estrellas = 4)::int AS cuatro_estrellas,
+       COUNT(c.id) FILTER (WHERE c.estrellas <= 3)::int AS tres_o_menos
+     FROM perfiles_trabajador p
+     LEFT JOIN calificaciones_trabajador c ON c.trabajador_id = p.usuario_id AND c.retirada_en IS NULL
+     WHERE p.usuario_id = $2 AND p.estado_verificacion = 'aprobado' AND $1::bigint IS NOT NULL
+     GROUP BY p.usuario_id`,
+    [usuarioId, recursoId],
+  );
+  return fila;
   }
 
   async evaluarCliente(usuarioId: string, recursoId: string, valoracion: number, descripcion: string): Promise<ResultadoCalificaciones | undefined> {
