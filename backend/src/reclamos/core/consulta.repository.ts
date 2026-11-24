@@ -1,3 +1,3 @@
 export interface ReclamosRepository {
-  listar(usuarioId: string): Promise<Record<string, unknown>[]>;
+  listar(usuarioId: string, rolActivo: string): Promise<Record<string, unknown>[]>;
 }

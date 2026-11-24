@@ -43,7 +43,8 @@ ORDER BY u.nombre_completo LIMIT 100`,
 FROM apelaciones a JOIN usuarios u ON u.id=a.solicitante_id WHERE a.solicitante_id=$1 OR $2::boolean ORDER BY a.id DESC LIMIT 100`,
   reclamos: `SELECT r.id,r.servicio_id,r.descripcion,r.tipo,r.estado,r.resultado,s.titulo,u.nombre_completo AS cliente
 FROM reclamos r JOIN servicios v ON v.id=r.servicio_id JOIN solicitudes_servicio s ON s.id=v.solicitud_id JOIN usuarios u ON u.id=r.cliente_id
-WHERE r.cliente_id=$1 OR $2::boolean ORDER BY r.id DESC LIMIT 100`,
+WHERE $2='administrador' OR ($2='cliente' AND r.cliente_id=$1) OR ($2='trabajador' AND v.trabajador_id=$1)
+ORDER BY r.id DESC LIMIT 100`,
   suspensiones: `SELECT id,estado,motivo,duracion_dias,inicia_en,termina_en,trabajador_id FROM suspensiones_trabajador WHERE trabajador_id=$1 ORDER BY id DESC LIMIT 100`,
   verificaciones: `SELECT v.id,v.estado,v.motivo_decision,u.nombre_completo,
 COALESCE((SELECT json_agg(json_build_object('id',d.id::text,'tipo',d.tipo_documento,'nombre',d.nombre_archivo)) FROM documentos_verificacion d WHERE d.solicitud_verificacion_id=v.id),'[]') AS documentos,
@@ -57,7 +58,7 @@ export class PanelTypeOrmRepository implements PanelRepository {
 
   consultar(consulta: ConsultaPanel, usuarioId: string, administrador: boolean, rol: string, desde?: string, hasta?: string) {
     const parametros = consulta === 'resumen' ? [usuarioId, desde ?? null, hasta ?? null] :
-      consulta === 'servicios' || consulta === 'cotizaciones' ? [usuarioId, rol] :
+      consulta === 'servicios' || consulta === 'cotizaciones' || consulta === 'reclamos' ? [usuarioId, rol] :
       consultas[consulta].includes('$2') ? [usuarioId, administrador] : [usuarioId];
     return this.db.query(consultas[consulta], parametros);
   }

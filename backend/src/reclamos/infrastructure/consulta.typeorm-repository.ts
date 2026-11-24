@@ -6,10 +6,13 @@ import { ReclamosRepository } from '../core/consulta.repository';
 export class ReclamosTypeOrmRepository implements ReclamosRepository {
   constructor(private readonly db: DataSource) {}
 
-  listar(usuarioId: string): Promise<Record<string, unknown>[]> {
+  listar(usuarioId: string, rolActivo: string): Promise<Record<string, unknown>[]> {
     return this.db.query(
-      `SELECT id, servicio_id, descripcion, tipo, estado, presentado_en, resultado FROM reclamos WHERE cliente_id = $1 ORDER BY id DESC LIMIT 100`,
-      [usuarioId],
+      `SELECT r.id, r.servicio_id, r.descripcion, r.tipo, r.estado, r.presentado_en, r.resultado
+       FROM reclamos r JOIN servicios s ON s.id = r.servicio_id
+       WHERE CASE WHEN $2 = 'trabajador' THEN s.trabajador_id = $1 ELSE r.cliente_id = $1 END
+       ORDER BY r.id DESC LIMIT 100`,
+      [usuarioId, rolActivo],
     );
   }
 }
