@@ -99,7 +99,7 @@ RETURNING id,estado,monto_total`,
   }
 
   async cancelarAntesDeIniciar(usuarioId: string, recursoId: string): Promise<ResultadoServicios | undefined> {
-    const [fila] = await this.db.query(
+    return this.cancelarConPropuestas(
       `WITH previo AS (
 SELECT id,estado,solicitud_id FROM servicios WHERE id=$2 AND cliente_id=$1
 AND estado IN ('en_negociacion','precio_fijado','agendado') FOR UPDATE
@@ -125,7 +125,6 @@ SELECT id,anterior,estado,$1 FROM cambio
 ) SELECT id,estado FROM cambio`,
       [usuarioId, recursoId],
     );
-    return fila;
   }
 
   async agendar(usuarioId: string, recursoId: string, fecha: string): Promise<ResultadoServicios | undefined> {
@@ -159,7 +158,7 @@ SELECT id,anterior,estado,$1 FROM cambio
   }
 
   async rechazarPrecio(usuarioId: string, recursoId: string, propuestaId: string): Promise<ResultadoServicios | undefined> {
-    const [fila] = await this.db.query(
+    return this.cancelarConPropuestas(
       `WITH previo AS (
  SELECT id,estado,solicitud_id FROM servicios WHERE id=$2 AND cliente_id=$1 AND estado IN ('en_negociacion','en_proceso') FOR UPDATE
 ), rechazo AS (
@@ -180,7 +179,6 @@ SELECT id,anterior,estado,$1 FROM cambio
 ) SELECT id,estado FROM cambio`,
       [usuarioId, recursoId, propuestaId],
     );
-    return fila;
   }
 
   async proponerIncremento(usuarioId: string, recursoId: string, manoObra: string, materiales: string, justificacion: string): Promise<ResultadoServicios | undefined> {
@@ -221,7 +219,7 @@ FROM importes WHERE $3::numeric+$4::numeric+costo_transporte+recargo>total_acord
   }
 
   async cancelarPorTrabajador(usuarioId: string, recursoId: string, motivo: string): Promise<ResultadoServicios | undefined> {
-    const [fila] = await this.db.query(
+    return this.cancelarConPropuestas(
       `WITH previo AS (
  SELECT id,estado,solicitud_id,fecha_visita FROM servicios WHERE id=$2 AND trabajador_id=$1
  AND estado IN ('en_negociacion','precio_fijado','agendado') FOR UPDATE
@@ -243,6 +241,21 @@ FROM importes WHERE $3::numeric+$4::numeric+costo_transporte+recargo>total_acord
 ) SELECT id,estado FROM cambio`,
       [usuarioId, recursoId, motivo],
     );
-    return fila;
+  }
+
+  private cancelarConPropuestas(consulta: string, parametros: string[]): Promise<ResultadoServicios | undefined> {
+    return this.db.transaction('READ COMMITTED', async tx => {
+      const [servicio]: { id: string; estado: string }[] = await tx.query(consulta, parametros);
+      if (!servicio) return undefined;
+
+      // Una consulta nueva ve las propuestas confirmadas mientras la cancelación esperaba el bloqueo.
+      await tx.query(
+        `UPDATE propuestas_precio
+         SET estado='cancelada', decidida_por=$2, decidida_en=NOW()
+         WHERE servicio_id=$1 AND estado='pendiente'`,
+        [servicio.id, parametros[0]],
+      );
+      return servicio;
+    });
   }
 }
