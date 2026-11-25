@@ -1,3 +1,3 @@
 export const environment = {
-  apiUrl: 'https://arreglalo-ya-api.onrender.com',
+  apiUrl: 'http://localhost:3000',
 };
