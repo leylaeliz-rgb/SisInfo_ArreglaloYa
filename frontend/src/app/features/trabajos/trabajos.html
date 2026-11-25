@@ -80,9 +80,12 @@
 @empty { <p class="ayuda">Sin pagos registrados.</p> }
 <h3>Historial de precios</h3>
 @for (p of s.precios; track p.id) {
-  <article class="oferta"><strong>{{ p.tipo }} · {{ p.total | currency:'BOB' }}</strong><p>{{ p.estado }}</p>
+  <article class="oferta"><strong>{{ p.tipo }} · {{ p.total | currency:'BOB' }}</strong>
+    <p>{{ s.estado === 'cancelado' && p.estado === 'pendiente' ? 'cancelada' : p.estado }}</p>
     @if (p.justificacion) { <p>{{ p.justificacion }}</p> }
-    @if (p.estado === 'pendiente' && esCliente) {
+    @if (p.estado === 'pendiente' && esCliente &&
+      ((s.estado === 'en_negociacion' && p.tipo === 'fijado') ||
+       (s.estado === 'en_proceso' && p.tipo === 'incrementado'))) {
       <div class="fila"><button class="btn" (click)="decidir(s,p,true)">Aceptar</button>
       <button class="btn-peligro" (click)="decidir(s,p,false)">Rechazar y cancelar</button></div>
     }
