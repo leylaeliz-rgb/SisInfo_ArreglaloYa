@@ -10,6 +10,6 @@ export class ReclamosController {
 
   @Get('me')
   listar(@Req() solicitud: SolicitudAutenticada) {
-    return this.consulta.listar(solicitud.user.sub);
+    return this.consulta.listar(solicitud.user.sub, solicitud.user.rolActivo);
   }
 }

@@ -50,7 +50,7 @@
 }
 }
 @if (pestana === 'reclamos') {
-@if (auth.rolActivo() === 'cliente') {
+@if (cliente) {
 <section class="tarjeta"><h2>Presentar un reclamo</h2>
 <form (ngSubmit)="presentar()">
 <label class="campo">Servicio finalizado<select name="servicio" [(ngModel)]="solicitudReclamo" required>
@@ -62,16 +62,18 @@
 <p class="ayuda">El plazo máximo es de siete días desde la finalización.</p><button class="btn">Presentar reclamo</button></form>
 </section>
 }
-<section class="tarjeta"><h2>{{ admin ? 'Reclamos de la plataforma' : 'Seguimiento de mis reclamos' }}</h2>
+<section class="tarjeta"><h2>{{ admin ? 'Reclamos de la plataforma' : trabajador ? 'Reclamos sobre mis servicios' : 'Seguimiento de mis reclamos' }}</h2>
 @for (r of reclamos; track r.id) {
 <article class="item-detalle"><h3>{{ r.titulo }}</h3><p>{{ r.tipo }} · {{ r.estado }}</p>
 @if (admin) { <p>Cliente {{ r.cliente }}</p> }<p>{{ r.descripcion }}</p>
-<app-adjuntos tipo="reclamos" [recurso]="r.id" [editar]="!admin && (r.estado === 'pendiente' || r.estado === 'en_revision')" />
+@if (admin || cliente) {
+<app-adjuntos tipo="reclamos" [recurso]="r.id" [editar]="cliente && (r.estado === 'pendiente' || r.estado === 'en_revision')" />
+}
 @if (r.resultado) { <p><strong>Resolución</strong> {{ r.resultado }}</p> }
 @if (admin && (r.estado === 'pendiente' || r.estado === 'en_revision')) {
 <button class="btn-sec" (click)="reclamo=r;resolucion=''">Resolver</button>
 }
-@if (!admin && r.estado === 'pendiente') { <button class="btn-peligro" (click)="retirar(r)">Retirar reclamo</button> }
+@if (cliente && r.estado === 'pendiente') { <button class="btn-peligro" (click)="retirar(r)">Retirar reclamo</button> }
 </article>
 } @empty { <p>Sin reclamos registrados.</p> }
 </section>

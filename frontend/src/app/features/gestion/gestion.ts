@@ -31,6 +31,8 @@ export class GestionPage extends Pantalla implements OnInit {
   resolucion = '';
 
   get admin() { return this.auth.rolActivo() === 'administrador'; }
+  get cliente() { return this.auth.rolActivo() === 'cliente'; }
+  get trabajador() { return this.auth.rolActivo() === 'trabajador'; }
   ngOnInit() {
     if (this.admin) this.pestana = 'verificaciones';
     void this.actualizar();
