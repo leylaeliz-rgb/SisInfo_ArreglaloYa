@@ -47,4 +47,22 @@ export class OperacionesReclamosController {
     exigirRol(solicitud.user.rolActivo, 'cliente');
     return resultado(this.operaciones.retirar(solicitud.user.sub, id(recursoId)));
   }
+
+  @Put(':id/reasignacion')
+reasignar(
+  @Req() solicitud: SolicitudAutenticada,
+  @Param('id') recursoId: string,
+  @Body() cuerpo: Record<string, unknown> | undefined,
+) {
+  exigirRol(solicitud.user.rolActivo, 'administrador');
+
+  return resultado(
+    this.operaciones.reasignar(
+      solicitud.user.sub,
+      id(recursoId),
+      id(cuerpo?.nuevoResponsableId),
+      texto(4000)(cuerpo?.motivo),
+    ),
+  );
+}
 }
