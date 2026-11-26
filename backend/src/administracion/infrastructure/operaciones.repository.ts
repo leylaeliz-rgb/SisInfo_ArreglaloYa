@@ -72,6 +72,54 @@ export class OperacionesAdministracionTypeOrmRepository implements OperacionesAd
     });
   }
 
+  async registrarSuspension(usuarioId: string, trabajadorId: string, motivo: string, iniciaEn: string, terminaEn: string): Promise<ResultadoAdministracion | undefined> {
+    return this.db.transaction(async (tx) => {
+      const [trabajador] = await tx.query(
+        `SELECT usuario_id FROM perfiles_trabajador WHERE usuario_id=$1 FOR UPDATE`,
+        [trabajadorId],
+      );
+      if (!trabajador) return undefined;
+
+      const [periodo] = await tx.query(
+        `SELECT
+           $2::date >= (NOW() AT TIME ZONE 'America/La_Paz')::date AS desde_hoy,
+           ($2::date::timestamp AT TIME ZONE 'America/La_Paz') AS inicia_en,
+           (($3::date + 1)::timestamp AT TIME ZONE 'America/La_Paz') AS termina_en,
+           EXISTS (
+             SELECT 1 FROM suspensiones_trabajador
+             WHERE trabajador_id=$1 AND estado IN ('activa','programada')
+               AND inicia_en < (($3::date + 1)::timestamp AT TIME ZONE 'America/La_Paz')
+               AND termina_en > ($2::date::timestamp AT TIME ZONE 'America/La_Paz')
+           ) AS solapada`,
+        [trabajadorId, iniciaEn, terminaEn],
+      );
+      if (!periodo?.desde_hoy || periodo.solapada) return undefined;
+
+      const [incidencia] = await tx.query(
+        `INSERT INTO incidencias_disciplinarias
+         (trabajador_id,reportada_por,motivo,estado,revisada_por,revisada_en,observaciones)
+         VALUES ($1,$2,$3,'confirmada',$2,NOW(),'Suspensión registrada por administración')
+         RETURNING id`,
+        [trabajadorId, usuarioId, motivo],
+      );
+      if (!incidencia) return undefined;
+
+      const [fila] = await tx.query(
+        `INSERT INTO suspensiones_trabajador
+         (trabajador_id,incidencia_id,numero_reincidencia,duracion_dias,motivo,inicia_en,termina_en,estado,aplicada_por)
+         SELECT $1,$2,COALESCE(MAX(numero_reincidencia),0)+1,$3::date-$4::date+1,$5,
+           GREATEST($4::date::timestamp AT TIME ZONE 'America/La_Paz',NOW()),
+           (($3::date+1)::timestamp AT TIME ZONE 'America/La_Paz'),
+           CASE WHEN $4::date=(NOW() AT TIME ZONE 'America/La_Paz')::date THEN 'activa' ELSE 'programada' END,$6
+         FROM suspensiones_trabajador
+         WHERE trabajador_id=$1
+         RETURNING id,estado,duracion_dias,inicia_en,termina_en,trabajador_id,motivo`,
+        [trabajadorId, incidencia.id, terminaEn, iniciaEn, motivo, usuarioId],
+      );
+      return fila;
+    });
+  }
+
   async apelarVerificacion(usuarioId: string, recursoId: string, motivo: string): Promise<ResultadoAdministracion | undefined> {
     const [fila] = await this.db.query(
       `WITH previo AS (SELECT id FROM solicitudes_verificacion WHERE id=$2 AND trabajador_id=$1 AND estado='rechazada' FOR UPDATE)

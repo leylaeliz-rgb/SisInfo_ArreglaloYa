@@ -1,7 +1,7 @@
-import { Get, Patch, Controller, Req, UseGuards, Put, Param, Post, Body } from '@nestjs/common';
+import { BadRequestException, Get, Patch, Controller, Req, UseGuards, Put, Param, Post, Body } from '@nestjs/common';
 import { AuthGuard } from '../../auth/api/auth.guard';
 import type { SolicitudAutenticada } from '../../auth/api/auth.guard';
-import { resultado, exigirRol, id, texto, opcion } from '../../shared/api/validacion';
+import { resultado, exigirRol, id, texto, opcion, fechaCalendario } from '../../shared/api/validacion';
 import { OperacionesAdministracionService } from '../services/operaciones.service';
 
 @Controller('administracion')
@@ -18,6 +18,24 @@ export class OperacionesAdministracionController {
     return resultado(this.operaciones.revocarSuspension(
       solicitud.user.sub,
       id(recursoId),
+    ));
+  }
+
+  @Post('suspensiones')
+  registrarSuspension(
+    @Req() solicitud: SolicitudAutenticada,
+    @Body() cuerpo: Record<string, unknown> | undefined,
+  ) {
+    exigirRol(solicitud.user.rolActivo, 'administrador');
+    const trabajadorId = id(cuerpo?.trabajadorId);
+    const motivo = texto(2000)(cuerpo?.motivo);
+    const iniciaEn = fechaCalendario(cuerpo?.iniciaEn);
+    const terminaEn = fechaCalendario(cuerpo?.terminaEn);
+    if (terminaEn < iniciaEn) {
+      throw new BadRequestException('La fecha final debe ser igual o posterior a la fecha inicial.');
+    }
+    return resultado(this.operaciones.registrarSuspension(
+      solicitud.user.sub, trabajadorId, motivo, iniciaEn, terminaEn,
     ));
   }
 

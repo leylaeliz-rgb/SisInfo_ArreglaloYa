@@ -21,6 +21,21 @@ interface Suspension {
     </button></header>
     <app-feedback [error]="error()" [mensaje]="mensaje()" [ocupado]="ocupado()" />
     <fieldset class="sin-borde" [disabled]="ocupado()">
+      <form class="tarjeta" (ngSubmit)="registrarSuspension()"><h2>Registrar suspension temporal</h2>
+        <p>La fecha final se incluye en el periodo. El trabajador no podra enviar cotizaciones durante esas fechas.</p>
+        <label class="campo">Trabajador<select name="trabajadorSuspension" [(ngModel)]="trabajadorSuspension" required>
+          <option value="" disabled>Selecciona un profesional</option>
+          @for (p of profesionales; track p.id) { <option [value]="p.id">{{ p.nombre_completo }}</option> }
+        </select></label>
+        <label class="campo">Motivo<textarea name="motivoSuspension" [(ngModel)]="motivoSuspension" maxlength="2000" required></textarea></label>
+        <div class="fila">
+          <label class="campo">Desde<input type="date" name="fechaInicio" [(ngModel)]="fechaInicio" [min]="hoy" required /></label>
+          <label class="campo">Hasta inclusive<input type="date" name="fechaFin" [(ngModel)]="fechaFin" [min]="fechaInicio" required /></label>
+        </div>
+        <button class="btn-peligro">Registrar suspension</button>
+      </form>
+    </fieldset>
+    <fieldset class="sin-borde" [disabled]="ocupado()">
     <form class="tarjeta" (ngSubmit)="registrar()"><h2>Registrar incidencia</h2>
       <label class="campo">Profesional<select name="trabajador" [(ngModel)]="trabajador" required>
         <option value="" disabled>Selecciona un profesional</option>
@@ -61,10 +76,19 @@ export class Suspensiones extends Pantalla implements OnInit {
   suspensiones: Suspension[] = [];
   trabajador = '';
   motivo = '';
+  trabajadorSuspension = '';
+  motivoSuspension = '';
+  fechaInicio = this.fechaLocal();
+  fechaFin = this.fechaLocal();
+  readonly hoy = this.fechaLocal();
   seleccionada: Incidencia | null = null;
   estado = 'confirmada';
   observaciones = '';
   ngOnInit() { void this.actualizar(); }
+  private fechaLocal() {
+    const ahora = new Date();
+    return `${ahora.getFullYear()}-${String(ahora.getMonth() + 1).padStart(2, '0')}-${String(ahora.getDate()).padStart(2, '0')}`;
+  }
   actualizar() { return this.realizar(() => this.cargar(), ''); }
   async cargar() {
     const [p, i, s] = await Promise.all([
@@ -94,6 +118,17 @@ export class Suspensiones extends Pantalla implements OnInit {
       await this.api.enviar('POST', '/administracion/incidencias/' + i.id + '/suspension');
       await this.cargar();
     });
+  }
+  registrarSuspension() {
+    void this.realizar(async () => {
+      await this.api.enviar('POST', '/administracion/suspensiones', {
+        trabajadorId: this.trabajadorSuspension, motivo: this.motivoSuspension,
+        iniciaEn: this.fechaInicio, terminaEn: this.fechaFin,
+      });
+      this.trabajadorSuspension = ''; this.motivoSuspension = '';
+      this.fechaInicio = this.fechaLocal(); this.fechaFin = this.fechaInicio;
+      await this.cargar();
+    }, 'Suspension registrada.');
   }
   revocar(s: Suspension) {
     if (!confirm('¿Dejar sin efecto esta suspensión?')) return;

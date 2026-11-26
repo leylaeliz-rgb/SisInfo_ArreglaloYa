@@ -62,6 +62,17 @@ export async function resultado<T>(operacion: Promise<T | undefined>): Promise<T
   return fila;
 }
 
+export function fechaCalendario(valor: unknown): string {
+  if (typeof valor !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(valor)) {
+    throw new BadRequestException('Indica una fecha válida en formato AAAA-MM-DD.');
+  }
+  const instante = Date.parse(`${valor}T00:00:00.000Z`);
+  if (!Number.isFinite(instante) || new Date(instante).toISOString().slice(0, 10) !== valor) {
+    throw new BadRequestException('Indica una fecha valida en formato AAAA-MM-DD.');
+  }
+  return valor;
+}
+
 export function fechaFutura(valor: unknown): string {
   if (typeof valor !== 'string' || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{3})?(?:Z|[+-]\d{2}:\d{2})$/.test(valor) ||
       !Number.isFinite(Date.parse(valor)) || Date.parse(valor) <= Date.now()) {
