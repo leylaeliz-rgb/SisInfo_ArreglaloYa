@@ -14,4 +14,8 @@ export class OperacionesReclamosService {
   retirar(usuarioId: string, recursoId: string) {
     return this.repositorio.retirar(usuarioId, recursoId);
   }
+  reasignar( usuarioId: string, reclamoId: string, nuevoResponsableId: string, motivo: string,
+) {
+  return this.repositorio.reasignar(usuarioId,reclamoId,nuevoResponsableId,motivo,);
+}
 }
