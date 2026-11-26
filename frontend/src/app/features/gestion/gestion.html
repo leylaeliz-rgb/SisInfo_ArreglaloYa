@@ -65,7 +65,42 @@
 <section class="tarjeta"><h2>{{ admin ? 'Reclamos de la plataforma' : trabajador ? 'Reclamos sobre mis servicios' : 'Seguimiento de mis reclamos' }}</h2>
 @for (r of reclamos; track r.id) {
 <article class="item-detalle"><h3>{{ r.titulo }}</h3><p>{{ r.tipo }} · {{ r.estado }}</p>
-@if (admin) { <p>Cliente {{ r.cliente }}</p> }<p>{{ r.descripcion }}</p>
+@if (admin) {
+<p>Cliente {{ r.cliente }}</p>
+<p>
+  <strong>Escalamiento:</strong>
+  @if (r.escalado_en) {
+    <span class="estado-escalado">Escalado · {{ r.escalado_en | date:'short' }}</span>
+  } @else {
+    <span class="ayuda">Sin escalar</span>
+  }
+</p>
+<p><strong>Responsable:</strong> {{ r.responsable_nombre || (r.asignado_a ? 'Administrador #' + r.asignado_a : 'Sin asignar') }}</p>
+}
+<p>{{ r.descripcion }}</p>
+@if (admin && r.escalado_en && (r.estado === 'pendiente' || r.estado === 'en_revision')) {
+<div class="fila acciones-reclamo">
+  <button type="button" class="btn-sec" (click)="iniciarReasignacion(r)">Reasignar responsable</button>
+  <button type="button" class="btn-sec" (click)="consultarHistorialAsignaciones(r)">
+    {{ historialReclamoId === r.id ? 'Ocultar historial' : 'Ver historial de asignaciones' }}
+  </button>
+</div>
+@if (historialReclamoId === r.id) {
+<section class="historial-asignaciones">
+  <h4>Historial de asignaciones</h4>
+  @for (h of historialAsignaciones; track h.id || h.cambiado_en) {
+    <article class="registro-historial">
+      <p><strong>Responsable anterior:</strong> {{ h.responsable_anterior || 'Sin asignar' }}</p>
+      <p><strong>Nuevo responsable:</strong> {{ h.responsable_nuevo }}</p>
+      <p><strong>Realizado por:</strong> {{ h.cambiado_por }}</p>
+      <p><strong>Origen:</strong> {{ h.origen }}</p>
+      <p><strong>Motivo:</strong> {{ h.motivo }}</p>
+      <p><strong>Fecha:</strong> {{ h.cambiado_en | date:'medium' }}</p>
+    </article>
+  } @empty { <p class="ayuda">Este reclamo todavía no tiene cambios de responsable.</p> }
+</section>
+}
+}
 @if (admin || cliente) {
 <app-adjuntos tipo="reclamos" [recurso]="r.id" [editar]="cliente && (r.estado === 'pendiente' || r.estado === 'en_revision')" />
 }
@@ -77,6 +112,24 @@
 </article>
 } @empty { <p>Sin reclamos registrados.</p> }
 </section>
+@if (reclamoReasignacion && admin) {
+<form class="tarjeta formulario-accion" (ngSubmit)="reasignarReclamo()">
+  <h2>Reasignar reclamo: {{ reclamoReasignacion.titulo }}</h2>
+  <p class="ayuda">Introduce el ID de un usuario que tenga una cuenta activa y el rol de administrador.</p>
+  <label class="campo">ID del nuevo responsable
+    <input type="text" name="nuevoResponsableId" [(ngModel)]="nuevoResponsableId"
+      inputmode="numeric" pattern="[1-9][0-9]*" maxlength="19" required />
+  </label>
+  <label class="campo">Motivo de la reasignación
+    <textarea name="motivoReasignacion" [(ngModel)]="motivoReasignacion"
+      maxlength="4000" required></textarea>
+  </label>
+  <div class="fila">
+    <button class="btn" [disabled]="ocupado()">Guardar reasignación</button>
+    <button type="button" class="btn-sec" (click)="cancelarReasignacion()">Cancelar</button>
+  </div>
+</form>
+}
 @if (reclamo && admin) {
 <form class="tarjeta" (ngSubmit)="resolverReclamo()"><h2>Resolver reclamo sobre {{ reclamo.titulo }}</h2>
 <label class="campo">Estado<select name="estado" [(ngModel)]="estadoResolucion"><option value="resuelto">Resuelto</option><option value="rechazado">Rechazado</option></select></label>

@@ -38,6 +38,20 @@ export interface Oferta {
 export interface Reclamo {
   id: string; servicio_id: string; titulo: string; descripcion: string; tipo: string;
   estado: string; resultado: string | null; cliente: string;
+  escalado_en?: string | null;
+  asignado_a?: string | null;
+  responsable_nombre?: string | null;
+}
+
+export interface HistorialAsignacionReclamo {
+  id?: string;
+  reclamo_id: string;
+  responsable_anterior: string | null;
+  responsable_nuevo: string;
+  cambiado_por: string;
+  origen: string;
+  motivo: string;
+  cambiado_en: string;
 }
 export interface Apelacion {
   id: string; estado: string; motivo: string; decision: string | null; nombre_completo: string;
