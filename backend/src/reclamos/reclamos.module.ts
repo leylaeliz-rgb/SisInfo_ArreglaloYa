@@ -18,6 +18,7 @@ import { ConsultarReclamosService,} from './services/consultar.service';
 import { OperacionesReclamosService,} from './services/operaciones.service';
 
 import { ConfiguracionEscalamientoService,} from './services/configuracion-escalamiento.service';
+import {  EscalamientoReclamosJob,} from './infrastructure/escalamiento-reclamos.job';
 
 @Module({
   imports: [AuthModule],
@@ -29,6 +30,7 @@ import { ConfiguracionEscalamientoService,} from './services/configuracion-escal
   ],
 
   providers: [
+    EscalamientoReclamosJob,
     OperacionesReclamosTypeOrmRepository,
 
     {
