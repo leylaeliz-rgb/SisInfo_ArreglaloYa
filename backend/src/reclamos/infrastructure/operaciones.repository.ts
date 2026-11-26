@@ -35,4 +35,119 @@ SELECT id,'pendiente',estado,$1,'Retirado por el cliente' FROM cambio
     );
     return fila;
   }
+  async reasignar(
+  usuarioId: string,
+  reclamoId: string,
+  nuevoResponsableId: string,
+  motivo: string,
+): Promise<ResultadoReclamos | undefined> {
+
+  const transaccion = this.db.createQueryRunner();
+
+  await transaccion.connect();
+  await transaccion.startTransaction();
+
+  try {
+
+    // 1. Buscar y bloquear el reclamo.
+    const [reclamo] = await transaccion.query(
+      `SELECT id, estado, escalado_en, asignado_a
+       FROM reclamos
+       WHERE id = $1
+       FOR UPDATE`,
+      [reclamoId],
+    );
+
+    // 2. Comprobar que el reclamo puede reasignarse.
+    if (
+      !reclamo ||
+      !reclamo.escalado_en ||
+      !['pendiente', 'en_revision'].includes(reclamo.estado)
+    ) {
+      await transaccion.rollbackTransaction();
+      return undefined;
+    }
+
+    // 3. Comprobar que el nuevo responsable
+    // es un administrador con cuenta activa.
+    const [responsable] = await transaccion.query(
+      `SELECT u.id
+       FROM usuarios u
+       INNER JOIN usuario_roles ur
+         ON ur.usuario_id = u.id
+       INNER JOIN roles ro
+         ON ro.id = ur.rol_id
+       WHERE u.id = $1
+         AND u.estado_cuenta = 'activa'
+         AND ro.codigo = 'ADMINISTRADOR'
+       LIMIT 1`,
+      [nuevoResponsableId],
+    );
+
+    if (!responsable) {
+      await transaccion.rollbackTransaction();
+      return undefined;
+    }
+
+    // 4. Evitar asignar el reclamo al mismo responsable.
+    if (
+      reclamo.asignado_a !== null &&
+      reclamo.asignado_a !== undefined &&
+      String(reclamo.asignado_a) === nuevoResponsableId
+    ) {
+      await transaccion.rollbackTransaction();
+      return undefined;
+    }
+
+    // 5. Actualizar el responsable del reclamo.
+    const [actualizado] = await transaccion.query(
+      `UPDATE reclamos
+       SET asignado_a = $2
+       WHERE id = $1
+       RETURNING id, estado, asignado_a, escalado_en`,
+      [reclamoId, nuevoResponsableId],
+    );
+
+    if (!actualizado) {
+      await transaccion.rollbackTransaction();
+      return undefined;
+    }
+
+    // 6. Registrar el cambio en el historial.
+    await transaccion.query(
+      `INSERT INTO historial_asignacion_reclamo (
+        reclamo_id,
+        responsable_anterior,
+        responsable_nuevo,
+        cambiado_por,
+        origen,
+        motivo,
+        cambiado_en
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, NOW())`,
+      [
+        reclamoId,
+        reclamo.asignado_a,
+        nuevoResponsableId,
+        usuarioId,
+        'manual',
+        motivo,
+      ],
+    );
+
+    await transaccion.commitTransaction();
+
+    return actualizado;
+
+  } catch (error) {
+
+    await transaccion.rollbackTransaction();
+    throw error;
+
+  } finally {
+
+    await transaccion.release();
+
+  }
+}
 }
