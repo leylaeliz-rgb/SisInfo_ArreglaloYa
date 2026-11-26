@@ -8,4 +8,5 @@ export interface OperacionesReclamosRepository {
   resolver(usuarioId: string, recursoId: string, estado: string, resultado: string): Promise<ResultadoReclamos | undefined>;
 
   retirar(usuarioId: string, recursoId: string): Promise<ResultadoReclamos | undefined>;
+  reasignar( usuarioId: string, reclamoId: string, nuevoResponsableId: string, motivo: string, ): Promise<ResultadoReclamos | undefined>;
 }
