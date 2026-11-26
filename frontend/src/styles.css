@@ -188,3 +188,31 @@ button:focus-visible, a:focus-visible { outline: 3px solid rgba(255,154,77,.55);
 .btn-actualizar:hover:not(:disabled) { background: var(--primario-hover); }
 .btn-actualizar:disabled { opacity: 0.6; cursor: not-allowed; }
 
+
+/* Gestión de reclamos escalados */
+.estado-escalado {
+  display: inline-flex;
+  align-items: center;
+  padding: .28rem .65rem;
+  color: #8b431c;
+  background: #fff0e3;
+  border: 1px solid #f3c49f;
+  border-radius: 2rem;
+  font-size: .78rem;
+  font-weight: 700;
+}
+.acciones-reclamo { margin: .8rem 0; }
+.historial-asignaciones {
+  margin: .8rem 0 1rem;
+  padding: 1rem;
+  background: #fff8f0;
+  border: 1px solid var(--borde);
+  border-radius: 12px;
+}
+.historial-asignaciones h4 { margin: 0 0 .5rem; color: var(--marron); }
+.registro-historial {
+  padding: .65rem 0;
+  border-bottom: 1px solid var(--borde);
+}
+.registro-historial:last-child { border-bottom: 0; }
+.registro-historial p { margin: .25rem 0; font-size: .88rem; }

@@ -1,12 +1,13 @@
 import { Adjuntos } from '../../shared/adjuntos';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { DatePipe } from '@angular/common';
 import { Pantalla } from '../../shared/pantalla';
 import { Feedback } from '../../shared/feedback';
-import { Verificacion, Reclamo, Apelacion, Documento, Servicio } from '../../core/services/proyecto-api.service';
+import { Verificacion, Reclamo, Apelacion, Documento, Servicio, HistorialAsignacionReclamo } from '../../core/services/proyecto-api.service';
 
 @Component({
-  imports: [FormsModule, Feedback, Adjuntos],
+  imports: [FormsModule, DatePipe, Feedback, Adjuntos],
   templateUrl: './gestion.html',
 })
 export class GestionPage extends Pantalla implements OnInit {
@@ -29,6 +30,11 @@ export class GestionPage extends Pantalla implements OnInit {
   estadoResolucion = 'resuelto';
   estadoApelacion = 'aceptada';
   resolucion = '';
+  nuevoResponsableId = '';
+  motivoReasignacion = '';
+  reclamoReasignacion: Reclamo | null = null;
+  historialReclamoId: string | null = null;
+  historialAsignaciones: HistorialAsignacionReclamo[] = [];
 
   get admin() { return this.auth.rolActivo() === 'administrador'; }
   get cliente() { return this.auth.rolActivo() === 'cliente'; }
@@ -92,6 +98,56 @@ export class GestionPage extends Pantalla implements OnInit {
       await this.cargar();
     });
   }
+  iniciarReasignacion(r: Reclamo) {
+    this.reclamoReasignacion = r;
+    this.nuevoResponsableId = '';
+    this.motivoReasignacion = '';
+  }
+
+  cancelarReasignacion() {
+    this.reclamoReasignacion = null;
+    this.nuevoResponsableId = '';
+    this.motivoReasignacion = '';
+  }
+
+  reasignarReclamo() {
+    const r = this.reclamoReasignacion;
+    if (!r) return;
+    const responsableId = this.nuevoResponsableId.trim();
+    const motivo = this.motivoReasignacion.trim();
+    if (!/^[1-9][0-9]{0,18}$/.test(responsableId)) {
+      this.error.set('Introduce un ID válido para el nuevo administrador.');
+      return;
+    }
+    if (!motivo || motivo.length > 4000) {
+      this.error.set('El motivo es obligatorio y no puede superar 4000 caracteres.');
+      return;
+    }
+    void this.realizar(async () => {
+      await this.api.enviar('PUT', '/reclamos/' + r.id + '/reasignacion', {
+        nuevoResponsableId: responsableId,
+        motivo,
+      });
+      this.cancelarReasignacion();
+      await this.cargar();
+    }, 'Reclamo reasignado correctamente.');
+  }
+
+  consultarHistorialAsignaciones(r: Reclamo) {
+    if (this.historialReclamoId === r.id) {
+      this.historialReclamoId = null;
+      this.historialAsignaciones = [];
+      return;
+    }
+    void this.realizar(async () => {
+      const filas = await this.api.get<HistorialAsignacionReclamo[]>(
+        '/reclamos/' + r.id + '/historial-asignaciones',
+      );
+      this.historialAsignaciones = filas;
+      this.historialReclamoId = r.id;
+    }, '');
+  }
+
   resolverApelacion() {
     if (!this.apelacion) return;
     const id = this.apelacion.id;
