@@ -71,7 +71,15 @@
   <div><small>Total acordado</small><strong>{{ s.total_acordado | currency:'BOB' }}</strong></div>
   <div><small>Anticipo</small><strong>{{ s.monto_anticipo | currency:'BOB' }}</strong></div>
   <div><small>Saldo previsto</small><strong>{{ s.monto_saldo | currency:'BOB' }}</strong></div>
-</div><p class="ayuda">El anticipo QR es una simulación. El saldo se paga directamente al profesional. Comisión de referencia {{ s.monto_comision | currency:'BOB' }}.</p>
+</div>
+@let seg = seguimiento(s);
+<div class="resumen-dinero">
+  <div><small>Pagado</small><strong>{{ seg.pagado | currency:'BOB' }}</strong></div>
+  <div><small>Por confirmar</small><strong>{{ seg.porConfirmar | currency:'BOB' }}</strong></div>
+  <div><small>Pendiente</small><strong>{{ seg.pendiente | currency:'BOB' }}</strong></div>
+</div>
+<p class="ayuda">{{ seg.porcentaje }}% del total acordado pagado.{{ seg.pendiente === 0 && seg.porConfirmar === 0 ? ' Servicio liquidado.' : '' }}</p>
+<p class="ayuda">El anticipo QR es una simulación. El saldo se paga directamente al profesional. Comisión de referencia {{ s.monto_comision | currency:'BOB' }}.</p>
 }
 <h3>Pagos registrados</h3>
 @for (p of s.pagos; track p.id) { <p>{{ p.tipo }} · {{ p.monto | currency:'BOB' }} · {{ p.estado }} · {{ p.metodo }}</p>

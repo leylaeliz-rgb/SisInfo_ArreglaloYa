@@ -5,6 +5,7 @@ import { CurrencyPipe, DatePipe } from '@angular/common';
 import { Pantalla } from '../../shared/pantalla';
 import { Feedback } from '../../shared/feedback';
 import { Servicio, Precio } from '../../core/services/proyecto-api.service';
+import { seguimientoPagos } from '../../shared/seguimiento-pagos';
 
 @Component({
   imports: [FormsModule, CurrencyPipe, DatePipe, Feedback, Adjuntos],
@@ -38,6 +39,7 @@ export class TrabajosPage extends Pantalla implements OnInit {
   get visibles() { return this.servicios.filter(s => !this.filtro || s.estado === this.filtro); }
   get esCliente() { return this.auth.rolActivo() === 'cliente'; }
   pago(s: Servicio, tipo: string) { return s.pagos.find(p => p.tipo === tipo); }
+  seguimiento(s: Servicio) { return seguimientoPagos(s); }
   pendientes(s: Servicio) { return s.precios.filter(p => p.estado === 'pendiente'); }
   abrir(s: Servicio) { this.seleccionado = s; this.accion = ''; this.enlace = ''; this.referencias = null; }
   formulario(accion: string) {
