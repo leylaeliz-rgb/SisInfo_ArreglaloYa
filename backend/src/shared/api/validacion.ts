@@ -69,3 +69,19 @@ export function fechaFutura(valor: unknown): string {
   }
   return new Date(valor).toISOString();
 }
+
+export function fechaCalendarioFutura(valor: unknown): string {
+  if (
+    typeof valor !== 'string' ||
+    !/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(valor) ||
+    !Number.isFinite(Date.parse(valor)) ||
+    new Date(valor).toISOString().slice(0, 10) !== valor
+  ) {
+    throw new BadRequestException('Indica una fecha válida con formato AAAA-MM-DD.');
+  }
+  const hoy = new Date().toISOString().slice(0, 10);
+  if (valor <= hoy) {
+    throw new BadRequestException('La fecha de vencimiento debe ser posterior a hoy.');
+  }
+  return valor;
+}

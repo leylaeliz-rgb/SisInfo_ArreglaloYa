@@ -25,7 +25,17 @@
 <p>{{ v.estado }} · {{ v.motivo_decision }}</p>
 <h3>Documentación privada</h3>
 @for (d of v.documentos; track d.id) {
-  <p><button class="btn-link" (click)="descargar(d)">Descargar {{ d.tipo }} · {{ d.nombre }}</button></p>
+  <div class="fila">
+    <p>
+      <button class="btn-link" (click)="descargar(d)">Descargar {{ d.tipo }} · {{ d.nombre }}</button>
+      @if (d.fechaVencimiento) { · Vence: <strong>{{ d.fechaVencimiento }}</strong> }
+      @if (d.estadoVigencia) { · <span class="estado-cotizacion">{{ d.estadoVigencia }} ({{ d.estadoRevision }})</span> }
+    </p>
+    @if (v.estado === 'aprobada' && d.estadoRevision === 'pendiente' && d.estadoVigencia !== 'reemplazado') {
+      <button type="button" class="btn-sec" (click)="revisarDocumento(d, 'aprobado')">Aprobar renovación</button>
+      <button type="button" class="btn-peligro" (click)="revisarDocumento(d, 'rechazado')">Rechazar</button>
+    }
+  </div>
 } @empty { <p>El trabajador aún no adjuntó documentos.</p> }
 <h3>Criterios registrados</h3>
 @for (c of v.criterios; track c.criterio) { <p>{{ c.criterio }} · {{ c.resultado }} · {{ c.observaciones }}</p> }

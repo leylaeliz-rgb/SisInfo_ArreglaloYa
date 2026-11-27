@@ -49,6 +49,16 @@ export class GestionPage extends Pantalla implements OnInit {
   }
   descargar(d: Documento) { void this.realizar(() => this.api.descargar(d.id), ''); }
 
+  revisarDocumento(d: Documento, estado: 'aprobado' | 'rechazado') {
+    void this.realizar(async () => {
+      await this.api.enviar('PUT', '/verificaciones/documentos/' + d.id + '/revision', {
+        estado,
+        observacion: estado === 'aprobado' ? 'Documento renovado aprobado.' : 'Documento renovado rechazado.',
+      });
+      await this.cargar();
+    });
+  }
+
   revisar() {
     const v = this.seleccionado;
     if (!v) return;

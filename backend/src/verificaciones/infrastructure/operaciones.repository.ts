@@ -49,8 +49,21 @@ RETURNING id,estado`,
  SELECT v.id FROM solicitudes_verificacion v WHERE v.id=$2 AND v.estado IN ('pendiente','en_revision','requiere_informacion')
  AND ($4::varchar <> 'aprobado' OR EXISTS (
   SELECT 1 FROM documentos_verificacion d JOIN archivos_verificacion a ON a.documento_id=d.id
-  WHERE d.solicitud_verificacion_id=v.id AND d.tipo_documento=CASE WHEN $3::varchar='reputacion' THEN 'referencias_reputacion' ELSE $3::varchar END
+  WHERE d.solicitud_verificacion_id=v.id
+    AND d.estado_vigencia <> 'reemplazado'
+    AND (d.fecha_vencimiento IS NULL OR d.fecha_vencimiento >= CURRENT_DATE)
+    AND d.tipo_documento=CASE WHEN $3::varchar='reputacion' THEN 'referencias_reputacion' ELSE $3::varchar END
  )) FOR UPDATE OF v
+), doc_actualizado AS (
+ UPDATE documentos_verificacion d
+ SET estado_revision = CASE WHEN $4::varchar='aprobado' THEN 'aprobado' WHEN $4::varchar='rechazado' THEN 'rechazado' ELSE 'pendiente' END,
+     observacion_revision = $5,
+     revisado_por = $1,
+     revisado_en = NOW()
+ FROM elegible e
+ WHERE d.solicitud_verificacion_id = e.id
+   AND d.estado_vigencia <> 'reemplazado'
+   AND d.tipo_documento = CASE WHEN $3::varchar='reputacion' THEN 'referencias_reputacion' ELSE $3::varchar END
 )
 INSERT INTO revisiones_verificacion (solicitud_verificacion_id,criterio,resultado,observaciones,revisado_por,revisado_en)
 SELECT id,$3,$4,$5,$1,NOW() FROM elegible

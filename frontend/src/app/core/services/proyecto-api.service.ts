@@ -9,7 +9,29 @@ export interface Profesional {
   id: string; descripcion: string | null; zona_base_id: string; disponible: boolean;
   estado_verificacion: string; categorias: string[]; zonas: string[]; franjas: Franja[];
 }
-export interface Documento { id: string; tipo: string; nombre: string; }
+export interface Documento {
+  id: string;
+  tipo: string;
+  nombre: string;
+  fechaVencimiento?: string | null;
+  estadoRevision?: string;
+  estadoVigencia?: 'vigente' | 'por_vencer' | 'vencido' | 'reemplazado';
+  diasRestantes?: number | null;
+  obligatorio?: boolean;
+}
+export interface AlertaDocumento {
+  documento_id: string;
+  trabajador_id: string;
+  trabajador: string;
+  tipo_documento: string;
+  nombre_tipo: string;
+  nombre_archivo: string;
+  obligatorio: boolean;
+  estado_revision: string;
+  fecha_vencimiento: string | null;
+  dias_restantes: number | null;
+  estado_vigencia: 'vigente' | 'por_vencer' | 'vencido';
+}
 export interface Verificacion {
   id: string; estado: string; motivo_decision: string | null; nombre_completo: string;
   documentos: Documento[]; criterios: { criterio: string; resultado: string; observaciones: string }[];
