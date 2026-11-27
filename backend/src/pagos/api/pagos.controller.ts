@@ -20,6 +20,18 @@ export class PagosController {
   listar(@Req() solicitud: SolicitudAutenticada) {
     return this.consulta.listar(solicitud.user.sub);
   }
+    @Get(':servicioId/resumen')
+  async resumen(@Req() solicitud: SolicitudAutenticada, @Param('servicioId') id: string) {
+    this.validarId(id);
+    try {
+      return await this.consulta.resumen(id, solicitud.user.sub);
+    } catch (error) {
+      if (error instanceof ServicioInaccesible) {
+        throw new NotFoundException(error.message);
+      }
+      throw error;
+    }
+  }
 
   @Put(':servicioId/anticipo')
   anticipo(@Req() solicitud: SolicitudAutenticada, @Param('servicioId') id: string) {
@@ -57,9 +69,7 @@ export class PagosController {
   }
 
   private async ejecutar(solicitud: SolicitudAutenticada, id: string, accion: AccionPago) {
-    if (!/^[1-9][0-9]{0,18}$/.test(id) || BigInt(id) > 9223372036854775807n) {
-      throw new BadRequestException('El identificador de servicio es inválido.');
-    }
+  this.validarId(id);
 
     const rol = accion.tipo === 'revertir-anticipo' ? 'administrador' :
       accion.tipo === 'confirmar-saldo' ? 'trabajador' : 'cliente';
@@ -77,6 +87,11 @@ export class PagosController {
         throw new ConflictException(error.message);
       }
       throw error;
+    }
+  }
+    private validarId(id: string) {
+    if (!/^[1-9][0-9]{0,18}$/.test(id) || BigInt(id) > 9223372036854775807n) {
+      throw new BadRequestException('El identificador de servicio es inválido.');
     }
   }
 }

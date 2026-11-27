@@ -17,6 +17,7 @@ export interface PagoRegistrado {
 
 export class ServicioInaccesible extends Error {}
 export class PagoNoPermitido extends Error {}
+export class PagoExcedeImporte extends PagoNoPermitido {}
 
 export interface OperacionesPagoRepository {
   ejecutar(servicioId: string, usuarioId: string, accion: AccionPago): Promise<PagoRegistrado>;

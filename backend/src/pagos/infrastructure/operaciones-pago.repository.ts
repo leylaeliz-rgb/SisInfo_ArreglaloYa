@@ -3,6 +3,7 @@ import { DataSource, EntityManager } from 'typeorm';
 import {
   AccionPago, OperacionesPagoRepository, PagoNoPermitido, PagoRegistrado, ServicioInaccesible,
 } from '../core/operaciones-pago';
+import { aCentavos, deCentavos, pendienteEnCentavos, validarNuevoPago } from '../core/seguimiento-pagos';
 
 const columnas = 'id, servicio_id, tipo, monto, moneda, metodo, estado';
 
@@ -21,11 +22,12 @@ export class OperacionesPagoTypeOrmRepository implements OperacionesPagoReposito
         if (servicio.estado !== 'cancelado' || servicio.iniciado_en) {
           throw new PagoNoPermitido('La reversión requiere un servicio cancelado antes de iniciar.');
         }
-        if (servicio.cancelado_por === servicio.cliente_id &&
-            (!servicio.fecha_visita || !servicio.cancelado_en ||
-             servicio.fecha_visita.getTime() - servicio.cancelado_en.getTime() < 7_200_000)) {
+     if (servicio.cancelado_por === servicio.cliente_id &&
+                    servicio.fecha_visita && servicio.cancelado_en &&
+            servicio.fecha_visita.getTime() - servicio.cancelado_en.getTime() < 7_200_000) {
           throw new PagoNoPermitido('La cancelación del cliente no cumple la ventana de devolución.');
         }
+        
         const [pago]: PagoRegistrado[] = await tx.query(
           `SELECT ${columnas} FROM pagos WHERE servicio_id=$1 AND tipo='anticipo'
            AND metodo='qr_simulado' AND estado='confirmado'`,
@@ -107,13 +109,25 @@ export class OperacionesPagoTypeOrmRepository implements OperacionesPagoReposito
         throw new PagoNoPermitido('El anticipo supera el total acordado.');
       }
 
+      const existentes = await tx.query(
+        `SELECT p.tipo, p.monto, CASE WHEN r.pago_id IS NULL THEN p.estado ELSE 'revertido' END AS estado
+         FROM pagos p LEFT JOIN reversiones_pago_simulado r ON r.pago_id = p.id
+         WHERE p.servicio_id = $1`,
+        [servicioId],
+      );
+      // Anticipo: 25 % del total. Saldo: lo que todavía se adeuda.
+      const monto = tipo === 'anticipo'
+        ? deCentavos(aCentavos(resumen.anticipo))
+        : deCentavos(pendienteEnCentavos(resumen.total_acordado, existentes));
+      // Un pago nunca puede superar el importe adeudado.
+      validarNuevoPago(resumen.total_acordado, existentes, monto);
+
       const [nuevo]: PagoRegistrado[] = await tx.query(
         `INSERT INTO pagos (servicio_id, tipo, monto, moneda, metodo, destino, estado, registrado_por, confirmado_en)
-         VALUES ($1, $2, $3::numeric - $4::numeric, $5, $6, $7, $8, $9,
+         VALUES ($1, $2, $3::numeric, $4, $5, $6, $7, $8,
                  CASE WHEN $2::varchar = 'anticipo' THEN NOW() END)
          RETURNING ${columnas}`,
-        [servicioId, tipo, tipo === 'anticipo' ? resumen.anticipo : resumen.total_acordado,
-          anticipo?.monto ?? '0', resumen.moneda, metodo,
+        [servicioId, tipo, monto, resumen.moneda, metodo,
           tipo === 'anticipo' ? 'plataforma' : 'trabajador',
           tipo === 'anticipo' ? 'confirmado' : 'reportado', usuarioId],
       );

@@ -13,7 +13,9 @@ export class OperacionesServiciosTypeOrmRepository implements OperacionesServici
  JOIN solicitudes_servicio s ON s.id=c.solicitud_id
  JOIN perfiles_trabajador p ON p.usuario_id=c.trabajador_id
  WHERE c.id=$2 AND s.cliente_id=$1 AND s.estado IN ('publicada','recibiendo_ofertas') AND c.estado='enviada'
- AND p.estado_verificacion='aprobado'
+ AND p.estado_verificacion='aprobado' AND p.disponible
+ AND NOT EXISTS (SELECT 1 FROM pausas_disponibilidad WHERE trabajador_id=c.trabajador_id AND reactivada_en IS NULL)
+ AND NOT EXISTS (SELECT 1 FROM suspensiones_trabajador WHERE trabajador_id=c.trabajador_id AND estado IN ('activa','programada') AND NOW()>=inicia_en AND NOW()<termina_en)
  FOR UPDATE OF s,c
 ), nuevo AS (
  INSERT INTO servicios (solicitud_id,cotizacion_id,cliente_id,trabajador_id)
@@ -117,7 +119,7 @@ FROM cambio c WHERE s.id=c.solicitud_id
  SELECT p.id,$1,'Cancelación anticipada del cliente'
  FROM cambio c JOIN pagos p ON p.servicio_id=c.id
  WHERE p.tipo='anticipo' AND p.metodo='qr_simulado' AND p.estado='confirmado'
- AND c.fecha_visita>=NOW()+INTERVAL '2 hours'
+ AND (c.fecha_visita IS NULL OR c.fecha_visita>=NOW()+INTERVAL '2 hours')
  ON CONFLICT (pago_id) DO NOTHING
 ), historial AS (
 INSERT INTO historial_estados_servicio (servicio_id,estado_anterior,estado_nuevo,cambiado_por)
