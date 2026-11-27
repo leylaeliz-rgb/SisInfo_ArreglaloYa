@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { OperacionesCotizacionesRepository, ResultadoCotizaciones } from '../core/operaciones.repository';
 
@@ -7,6 +7,18 @@ export class OperacionesCotizacionesTypeOrmRepository implements OperacionesCoti
   constructor(private readonly db: DataSource) {}
 
   async enviar(usuarioId: string, recursoId: string, manoObra: string, materiales: string, transporte: string, requiereVisita: boolean): Promise<ResultadoCotizaciones | undefined> {
+    const [suspension] = await this.db.query(
+      `SELECT to_char(termina_en AT TIME ZONE 'America/La_Paz', 'DD/MM/YYYY HH24:MI') AS finaliza_en
+       FROM suspensiones_trabajador
+       WHERE trabajador_id=$1 AND estado IN ('activa','programada')
+         AND NOW()>=inicia_en AND NOW()<termina_en
+       ORDER BY termina_en LIMIT 1`,
+      [usuarioId],
+    );
+    if (suspension) {
+      throw new ForbiddenException(`No puedes presentar cotizaciones mientras tu suspension este vigente. Finaliza el ${suspension.finaliza_en}.`);
+    }
+
     const [fila] = await this.db.query(
       `WITH solicitud AS (SELECT * FROM solicitudes_servicio WHERE id=$2 AND cliente_id<>$1 AND estado IN ('publicada','recibiendo_ofertas') FOR UPDATE)
 INSERT INTO cotizaciones (solicitud_id,trabajador_id,monto_mano_obra,monto_materiales,materiales_incluidos,costo_transporte,requiere_visita,monto_estimado_total)

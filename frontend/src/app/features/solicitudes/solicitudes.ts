@@ -1,14 +1,14 @@
 import { Adjuntos } from '../../shared/adjuntos';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { CurrencyPipe } from '@angular/common';
+import { CurrencyPipe, DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { Pantalla } from '../../shared/pantalla';
 import { Feedback } from '../../shared/feedback';
-import { Opcion, Solicitud, Trabajador, Oferta } from '../../core/services/proyecto-api.service';
+import { Opcion, Solicitud, Trabajador, Oferta, Suspension } from '../../core/services/proyecto-api.service';
 
 @Component({
-  imports: [FormsModule, CurrencyPipe, RouterLink, Feedback, Adjuntos],
+  imports: [FormsModule, CurrencyPipe, DatePipe, RouterLink, Feedback, Adjuntos],
   templateUrl: './solicitudes.html',
 })
 export class SolicitudesPage extends Pantalla implements OnInit {
@@ -17,6 +17,7 @@ export class SolicitudesPage extends Pantalla implements OnInit {
   solicitudes: Solicitud[] = [];
   trabajadores: Trabajador[] = [];
   ofertas: Oferta[] = [];
+  suspensiones: Suspension[] = [];
   categoria = '';
   zona = '';
   titulo = '';
@@ -37,13 +38,20 @@ export class SolicitudesPage extends Pantalla implements OnInit {
 
   async cargar() {
     const trabajador = this.auth.rolActivo() === 'trabajador';
-    const [categorias, zonas, solicitudes, trabajadores, ofertas] = await Promise.all([
+    const [categorias, zonas, solicitudes, trabajadores, ofertas, suspensiones] = await Promise.all([
       this.api.get<Opcion[]>('/catalogos/categorias'), this.api.get<Opcion[]>('/catalogos/zonas'),
       this.api.get<Solicitud[]>(trabajador ? '/solicitudes/explorar' : '/solicitudes/me'),
       this.api.get<Trabajador[]>('/panel/trabajadores'), this.api.get<Oferta[]>('/panel/cotizaciones'),
+      trabajador ? this.api.get<Suspension[]>('/panel/suspensiones') : Promise.resolve([] as Suspension[]),
     ]);
     this.categorias = categorias; this.zonas = zonas; this.solicitudes = solicitudes;
-    this.trabajadores = trabajadores; this.ofertas = ofertas;
+    this.trabajadores = trabajadores; this.ofertas = ofertas; this.suspensiones = suspensiones;
+  }
+
+  get suspensionVigente(): Suspension | undefined {
+    const ahora = Date.now();
+    return this.suspensiones.find(s => (s.estado === 'activa' || s.estado === 'programada') &&
+      Date.parse(s.inicia_en) <= ahora && ahora < Date.parse(s.termina_en));
   }
 
   get profesionales() {
@@ -86,6 +94,10 @@ export class SolicitudesPage extends Pantalla implements OnInit {
   cotizar() {
     const solicitud = this.seleccionada;
     if (!solicitud) return;
+    if (this.suspensionVigente) {
+      this.error.set('No puedes enviar cotizaciones mientras tu suspension este vigente.');
+      return;
+    }
     if (!this.requiereVisita) this.transporte = 0;
     for (const [nombre, valor] of [
       ['Mano de obra', this.manoObra], ['Materiales', this.materiales], ['Transporte', this.transporte],

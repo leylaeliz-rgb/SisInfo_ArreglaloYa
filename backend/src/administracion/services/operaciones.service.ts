@@ -23,6 +23,10 @@ export class OperacionesAdministracionService {
     return this.repositorio.aplicarSuspension(usuarioId, incidenciaId);
   }
 
+  registrarSuspension(usuarioId: string, trabajadorId: string, motivo: string, iniciaEn: string, terminaEn: string) {
+    return this.repositorio.registrarSuspension(usuarioId, trabajadorId, motivo, iniciaEn, terminaEn);
+  }
+
   apelarVerificacion(usuarioId: string, recursoId: string, motivo: string) {
     return this.repositorio.apelarVerificacion(usuarioId, recursoId, motivo);
   }
