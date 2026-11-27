@@ -47,9 +47,44 @@ WHERE $2='administrador' OR ($2='cliente' AND r.cliente_id=$1) OR ($2='trabajado
 ORDER BY r.id DESC LIMIT 100`,
   suspensiones: `SELECT id,estado,motivo,duracion_dias,inicia_en,termina_en,trabajador_id FROM suspensiones_trabajador WHERE trabajador_id=$1 ORDER BY id DESC LIMIT 100`,
   verificaciones: `SELECT v.id,v.estado,v.motivo_decision,u.nombre_completo,
-COALESCE((SELECT json_agg(json_build_object('id',d.id::text,'tipo',d.tipo_documento,'nombre',d.nombre_archivo)) FROM documentos_verificacion d WHERE d.solicitud_verificacion_id=v.id),'[]') AS documentos,
+COALESCE((SELECT json_agg(json_build_object(
+  'id',d.id::text,
+  'tipo',d.tipo_documento,
+  'nombre',d.nombre_archivo,
+  'fechaVencimiento',to_char(d.fecha_vencimiento,'YYYY-MM-DD'),
+  'estadoRevision',d.estado_revision,
+  'obligatorio',COALESCE(t.obligatorio,FALSE),
+  'diasRestantes',CASE WHEN d.fecha_vencimiento IS NULL THEN NULL ELSE (d.fecha_vencimiento - CURRENT_DATE) END,
+  'estadoVigencia',CASE
+    WHEN d.estado_vigencia='reemplazado' THEN 'reemplazado'
+    WHEN d.fecha_vencimiento IS NOT NULL AND d.fecha_vencimiento < CURRENT_DATE THEN 'vencido'
+    WHEN d.fecha_vencimiento IS NOT NULL AND d.fecha_vencimiento <= CURRENT_DATE + make_interval(days => COALESCE(t.dias_alerta_previa,15)) THEN 'por_vencer'
+    ELSE 'vigente'
+  END
+) ORDER BY d.id) FROM documentos_verificacion d LEFT JOIN tipos_documento_verificacion t ON t.tipo=d.tipo_documento WHERE d.solicitud_verificacion_id=v.id),'[]') AS documentos,
 COALESCE((SELECT json_agg(json_build_object('criterio',r.criterio,'resultado',r.resultado,'observaciones',r.observaciones)) FROM revisiones_verificacion r WHERE r.solicitud_verificacion_id=v.id),'[]') AS criterios
 FROM solicitudes_verificacion v JOIN usuarios u ON u.id=v.trabajador_id WHERE v.trabajador_id=$1 OR $2::boolean ORDER BY v.id DESC LIMIT 100`,
+  alertas_documentos: `SELECT d.id::text AS documento_id, v.trabajador_id::text, u.nombre_completo AS trabajador,
+d.tipo_documento, COALESCE(t.nombre, d.tipo_documento) AS nombre_tipo, d.nombre_archivo,
+COALESCE(t.obligatorio, FALSE) AS obligatorio, d.estado_revision,
+to_char(d.fecha_vencimiento, 'YYYY-MM-DD') AS fecha_vencimiento,
+CASE WHEN d.fecha_vencimiento IS NULL THEN NULL ELSE (d.fecha_vencimiento - CURRENT_DATE) END AS dias_restantes,
+CASE
+  WHEN d.fecha_vencimiento IS NOT NULL AND d.fecha_vencimiento < CURRENT_DATE THEN 'vencido'
+  WHEN d.fecha_vencimiento IS NOT NULL AND d.fecha_vencimiento <= CURRENT_DATE + make_interval(days => COALESCE(t.dias_alerta_previa, 15)) THEN 'por_vencer'
+  ELSE 'vigente'
+END AS estado_vigencia
+FROM documentos_verificacion d
+JOIN solicitudes_verificacion v ON v.id = d.solicitud_verificacion_id
+JOIN usuarios u ON u.id = v.trabajador_id
+LEFT JOIN tipos_documento_verificacion t ON t.tipo = d.tipo_documento
+WHERE d.estado_vigencia <> 'reemplazado'
+  AND (v.trabajador_id = $1 OR $2::boolean)
+  AND (
+    d.estado_revision = 'pendiente'
+    OR (d.fecha_vencimiento IS NOT NULL AND d.fecha_vencimiento <= CURRENT_DATE + make_interval(days => COALESCE(t.dias_alerta_previa, 15)))
+  )
+ORDER BY d.fecha_vencimiento ASC NULLS LAST, d.id DESC LIMIT 100`,
 };
 
 @Injectable()

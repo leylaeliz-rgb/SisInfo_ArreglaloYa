@@ -12,7 +12,7 @@ export class PanelController {
 
   @Get(':consulta')
   consultar(@Req() solicitud: SolicitudAutenticada, @Param('consulta') entrada: string, @Query('desde') desde?: string, @Query('hasta') hasta?: string) {
-    const consulta = opcion('categorias', 'zonas', 'profesionales', 'resumen', 'trabajador', 'servicios', 'cotizaciones', 'trabajadores', 'apelaciones', 'reclamos', 'suspensiones', 'verificaciones')(entrada) as ConsultaPanel;
+    const consulta = opcion('categorias', 'zonas', 'profesionales', 'resumen', 'trabajador', 'servicios', 'cotizaciones', 'trabajadores', 'apelaciones', 'reclamos', 'suspensiones', 'verificaciones', 'alertas_documentos')(entrada) as ConsultaPanel;
     if (consulta === 'resumen' || consulta === 'profesionales' || consulta === 'categorias' || consulta === 'zonas') exigirRol(solicitud.user.rolActivo, 'administrador');
     for (const fecha of [desde, hasta]) {
       if (fecha !== undefined && (!/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(fecha) ||

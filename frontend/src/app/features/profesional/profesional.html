@@ -3,6 +3,18 @@
     <p>Completa tu información y verifica tu experiencia para recibir trabajos.</p></div>
 </header>
 <app-feedback [error]="error()" [mensaje]="mensaje()" [ocupado]="ocupado()" />
+@for (a of alertas; track a.documento_id) {
+  @if (a.estado_vigencia === 'vencido') {
+    <p class="alerta error">
+      <strong>Documento vencido ({{ a.nombre_tipo }}):</strong> caducó el {{ a.fecha_vencimiento }}.
+      {{ a.obligatorio ? 'No puedes enviar cotizaciones hasta renovarlo y que sea aprobado.' : 'Renuévalo en tu expediente.' }}
+    </p>
+  } @else if (a.estado_vigencia === 'por_vencer') {
+    <p class="alerta">
+      <strong>Próximo a vencer ({{ a.nombre_tipo }}):</strong> vence el {{ a.fecha_vencimiento }} (en {{ a.dias_restantes }} días). Renuévalo pronto.
+    </p>
+  }
+}
 <fieldset [disabled]="ocupado()" class="sin-borde">
 <section class="tarjeta">
   <h2>Presentación</h2>
@@ -60,17 +72,40 @@
   </form>
 </section>
 <section class="tarjeta"><h2>Verificación documental</h2>
-  <p class="ayuda">Adjunta identidad, antecedentes, habilidades y referencias de reputación. Archivos privados de hasta 2 MiB.</p>
+  <p class="ayuda">Adjunta identidad, antecedentes, habilidades y referencias de reputación. Los documentos obligatorios (identidad y antecedentes) requieren fecha de vencimiento.</p>
   <button class="btn-sec" (click)="solicitar()" [disabled]="perfil.estado_verificacion === 'aprobado'">Presentar solicitud de verificación</button>
   @for (v of verificaciones; track v.id) {
     <article class="item-detalle"><h3>Solicitud {{ v.id }} · {{ v.estado }}</h3>
       @if (v.motivo_decision) { <p>{{ v.motivo_decision }}</p> }
-      @for (d of v.documentos; track d.id) { <p>{{ d.tipo }} · {{ d.nombre }}</p> }
+      @for (d of v.documentos; track d.id) {
+        <div class="fila">
+          <p>
+            <strong>{{ d.tipo }}</strong> · {{ d.nombre }}
+            @if (d.fechaVencimiento) { · Vence: {{ d.fechaVencimiento }} }
+            @if (d.estadoVigencia) { · <span class="estado-cotizacion">{{ d.estadoVigencia }} ({{ d.estadoRevision }})</span> }
+          </p>
+          @if (d.estadoVigencia !== 'reemplazado') {
+            <button type="button" class="btn-sec" (click)="renovandoId = d.id; fechaRenovacion = ''; archivoRenovacion = null">Renovar</button>
+          }
+        </div>
+        @if (renovandoId === d.id) {
+          <div class="formulario-accion">
+            <h4>Renovar {{ d.tipo }}</h4>
+            <label class="campo">Nueva fecha de vencimiento<input type="date" [(ngModel)]="fechaRenovacion"></label>
+            <label class="campo">Nuevo archivo<input type="file" accept=".pdf,.png,.jpg,.jpeg" (change)="seleccionarRenovacion($event)"></label>
+            <div class="fila">
+              <button type="button" class="btn" (click)="renovar(d.id)">Enviar renovación</button>
+              <button type="button" class="btn-sec" (click)="renovandoId = null">Cancelar</button>
+            </div>
+          </div>
+        }
+      }
       @for (c of v.criterios; track c.criterio) { <p>{{ c.criterio }} · {{ c.resultado }} · {{ c.observaciones }}</p> }
       @if (v.estado === 'pendiente' || v.estado === 'requiere_informacion') {
         <label class="campo">Tipo de documento<select [(ngModel)]="tipo">
           @for (t of tipos; track t) { <option [value]="t">{{ t }}</option> }
         </select></label>
+        <label class="campo">Fecha de vencimiento (obligatoria en identidad y antecedentes)<input type="date" [(ngModel)]="fechaVencimiento"></label>
         <label class="campo">Archivo<input type="file" accept=".pdf,.png,.jpg,.jpeg" (change)="seleccionar($event)"></label>
         <button class="btn" (click)="subir(v.id)">Subir documento</button>
       }

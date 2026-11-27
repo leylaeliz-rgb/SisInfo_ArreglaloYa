@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Pantalla } from '../../shared/pantalla';
 import { Feedback } from '../../shared/feedback';
-import { Opcion, Profesional, Verificacion, Suspension, Franja } from '../../core/services/proyecto-api.service';
+import { Opcion, Profesional, Verificacion, Suspension, Franja, AlertaDocumento } from '../../core/services/proyecto-api.service';
 
 @Component({
   imports: [FormsModule, Feedback],
@@ -21,7 +21,12 @@ export class PerfilProfesional extends Pantalla implements OnInit {
   franjas: Franja[] = [];
   dias = 7;
   tipo = 'identidad';
+  fechaVencimiento = '';
   archivo: File | null = null;
+  renovandoId: string | null = null;
+  fechaRenovacion = '';
+  archivoRenovacion: File | null = null;
+  alertas: AlertaDocumento[] = [];
   motivo = '';
   readonly tipos = ['identidad', 'antecedentes', 'habilidades', 'referencias_reputacion'];
   readonly semana = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
@@ -29,22 +34,24 @@ export class PerfilProfesional extends Pantalla implements OnInit {
   ngOnInit() { void this.realizar(() => this.cargar(), ''); }
 
   async cargar() {
-    const [categorias, zonas, perfiles, verificaciones, suspensiones] = await Promise.all([
+    const [categorias, zonas, perfiles, verificaciones, suspensiones, alertas] = await Promise.all([
       this.api.get<Opcion[]>('/catalogos/categorias'), this.api.get<Opcion[]>('/catalogos/zonas'),
       this.api.get<Profesional[]>('/panel/trabajador'),
       this.api.get<Verificacion[]>('/panel/verificaciones'), this.api.get<Suspension[]>('/panel/suspensiones'),
+      this.api.get<AlertaDocumento[]>('/panel/alertas_documentos'),
     ]);
     this.categorias = categorias;
     this.zonas = zonas;
     this.perfil = perfiles[0] ?? null;
     this.verificaciones = verificaciones;
     this.suspensiones = suspensiones;
+    this.alertas = alertas;
     this.descripcion = this.perfil?.descripcion ?? '';
     this.zona = this.perfil?.zona_base_id ?? '';
     this.especialidades = this.perfil?.categorias ?? [];
     this.cobertura = this.perfil?.zonas ?? [];
     this.franjas = this.perfil?.franjas ?? [];
-  }
+  } 
 
   guardarPerfil() {
     void this.realizar(async () => {
@@ -104,10 +111,35 @@ export class PerfilProfesional extends Pantalla implements OnInit {
     void this.realizar(async () => {
       const datos = new FormData();
       datos.append('tipo', this.tipo);
+      if (this.fechaVencimiento) datos.append('fechaVencimiento', this.fechaVencimiento);
       datos.append('archivo', archivo);
       await this.api.enviar('POST', '/verificaciones/' + id + '/documentos', datos);
+      this.fechaVencimiento = '';
+      this.archivo = null;
       await this.cargar();
     });
+  }
+
+  seleccionarRenovacion(evento: Event) {
+    this.archivoRenovacion = (evento.target as HTMLInputElement).files?.[0] ?? null;
+  }
+
+  renovar(documentoId: string) {
+    const archivo = this.archivoRenovacion;
+    if (!archivo || archivo.size > 2097152) {
+      this.error.set('Selecciona un PDF, PNG o JPEG de hasta 2 MiB para renovar.');
+      return;
+    }
+    void this.realizar(async () => {
+      const datos = new FormData();
+      if (this.fechaRenovacion) datos.append('fechaVencimiento', this.fechaRenovacion);
+      datos.append('archivo', archivo);
+      await this.api.enviar('POST', '/verificaciones/documentos/' + documentoId + '/renovar', datos);
+      this.renovandoId = null;
+      this.fechaRenovacion = '';
+      this.archivoRenovacion = null;
+      await this.cargar();
+    }, 'Documento renovado enviado a revisión administrativa.');
   }
 
   apelar(tipo: 'verificaciones' | 'suspensiones', id: string) {

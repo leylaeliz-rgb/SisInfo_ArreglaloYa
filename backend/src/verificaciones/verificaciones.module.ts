@@ -11,11 +11,13 @@ import { OperacionesVerificacionesService } from './services/operaciones.service
 import { DocumentosVerificacionController } from './api/documentos.controller';
 import { DocumentosVerificacionService } from './services/documentos.service';
 import { DocumentosVerificacionTypeOrmRepository } from './infrastructure/documentos.repository';
+import { VigenciaDocumentosJob } from './infrastructure/vigencia-documentos.job';
 
 @Module({
   imports: [AuthModule],
   controllers: [DocumentosVerificacionController, OperacionesVerificacionesController, VerificacionesController],
   providers: [
+    VigenciaDocumentosJob,
     DocumentosVerificacionTypeOrmRepository,
     {
       provide: DocumentosVerificacionService,
