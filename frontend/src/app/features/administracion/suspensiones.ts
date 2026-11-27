@@ -32,6 +32,7 @@ interface Suspension {
           <label class="campo">Desde<input type="date" name="fechaInicio" [(ngModel)]="fechaInicio" [min]="hoy" required /></label>
           <label class="campo">Hasta inclusive<input type="date" name="fechaFin" [(ngModel)]="fechaFin" [min]="fechaInicio" required /></label>
         </div>
+        @if (duracionDias > 0) { <p>Duracion seleccionada: {{ duracionDias }} dia(s) calendario.</p> }
         <button class="btn-peligro">Registrar suspension</button>
       </form>
     </fieldset>
@@ -88,6 +89,13 @@ export class Suspensiones extends Pantalla implements OnInit {
   private fechaLocal() {
     const ahora = new Date();
     return `${ahora.getFullYear()}-${String(ahora.getMonth() + 1).padStart(2, '0')}-${String(ahora.getDate()).padStart(2, '0')}`;
+  }
+  get duracionDias() {
+    if (!this.fechaInicio || !this.fechaFin) return 0;
+    const inicio = Date.parse(`${this.fechaInicio}T00:00:00.000Z`);
+    const fin = Date.parse(`${this.fechaFin}T00:00:00.000Z`);
+    if (!Number.isFinite(inicio) || !Number.isFinite(fin) || fin < inicio) return 0;
+    return Math.floor((fin - inicio) / 86400000) + 1;
   }
   actualizar() { return this.realizar(() => this.cargar(), ''); }
   async cargar() {
