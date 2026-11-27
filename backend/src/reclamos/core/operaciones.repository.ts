@@ -9,4 +9,5 @@ export interface OperacionesReclamosRepository {
 
   retirar(usuarioId: string, recursoId: string): Promise<ResultadoReclamos | undefined>;
   reasignar( usuarioId: string, reclamoId: string, nuevoResponsableId: string, motivo: string, ): Promise<ResultadoReclamos | undefined>;
+  historialAsignaciones(reclamoId: string): Promise<Record<string, unknown>[]>;
 }

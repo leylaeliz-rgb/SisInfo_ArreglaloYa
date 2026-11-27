@@ -18,4 +18,8 @@ export class OperacionesReclamosService {
 ) {
   return this.repositorio.reasignar(usuarioId,reclamoId,nuevoResponsableId,motivo,);
 }
+
+  historialAsignaciones(reclamoId: string) {
+    return this.repositorio.historialAsignaciones(reclamoId);
+  }
 }

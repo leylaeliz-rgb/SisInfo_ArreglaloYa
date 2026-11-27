@@ -35,6 +35,23 @@ SELECT id,'pendiente',estado,$1,'Retirado por el cliente' FROM cambio
     );
     return fila;
   }
+  historialAsignaciones(reclamoId: string): Promise<Record<string, unknown>[]> {
+    return this.db.query(
+      `SELECT
+         reclamo_id::text AS reclamo_id,
+         responsable_anterior::text AS responsable_anterior,
+         responsable_nuevo::text AS responsable_nuevo,
+         cambiado_por::text AS cambiado_por,
+         origen,
+         motivo,
+         cambiado_en
+       FROM historial_asignacion_reclamo
+       WHERE reclamo_id = $1
+       ORDER BY cambiado_en DESC`,
+      [reclamoId],
+    );
+  }
+
   async reasignar(
   usuarioId: string,
   reclamoId: string,
