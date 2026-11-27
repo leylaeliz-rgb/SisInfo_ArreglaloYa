@@ -34,6 +34,9 @@ export interface Oferta {
   id: string; solicitud_id: string; trabajador_id: string; trabajador: string; cliente_id: string;
   titulo: string; estado: string; estado_solicitud: string; monto_estimado_total: string; moneda: string;
   condiciones: string | null;
+  enviada_en: string;
+  reputacion_promedio: number | null;
+  reputacion_total: number;
 }
 export interface Reclamo {
   id: string; servicio_id: string; titulo: string; descripcion: string; tipo: string;

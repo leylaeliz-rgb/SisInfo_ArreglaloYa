@@ -6,9 +6,10 @@ import { RouterLink } from '@angular/router';
 import { Pantalla } from '../../shared/pantalla';
 import { Feedback } from '../../shared/feedback';
 import { Opcion, Solicitud, Trabajador, Oferta } from '../../core/services/proyecto-api.service';
+import { ComparadorCotizaciones } from './comparador-cotizaciones';
 
 @Component({
-  imports: [FormsModule, CurrencyPipe, RouterLink, Feedback, Adjuntos],
+  imports: [FormsModule, CurrencyPipe, RouterLink, Feedback, Adjuntos, ComparadorCotizaciones],
   templateUrl: './solicitudes.html',
 })
 export class SolicitudesPage extends Pantalla implements OnInit {
@@ -38,9 +39,11 @@ export class SolicitudesPage extends Pantalla implements OnInit {
   async cargar() {
     const trabajador = this.auth.rolActivo() === 'trabajador';
     const [categorias, zonas, solicitudes, trabajadores, ofertas] = await Promise.all([
-      this.api.get<Opcion[]>('/catalogos/categorias'), this.api.get<Opcion[]>('/catalogos/zonas'),
+      this.api.get<Opcion[]>('/catalogos/categorias'),
+      this.api.get<Opcion[]>('/catalogos/zonas'),
       this.api.get<Solicitud[]>(trabajador ? '/solicitudes/explorar' : '/solicitudes/me'),
-      this.api.get<Trabajador[]>('/panel/trabajadores'), this.api.get<Oferta[]>('/panel/cotizaciones'),
+      this.api.get<Trabajador[]>('/panel/trabajadores'), 
+      this.api.get<Oferta[]>('/panel/cotizaciones'),
     ]);
     this.categorias = categorias; this.zonas = zonas; this.solicitudes = solicitudes;
     this.trabajadores = trabajadores; this.ofertas = ofertas;
@@ -54,6 +57,7 @@ export class SolicitudesPage extends Pantalla implements OnInit {
 
   nombreZona(id: string) { return this.zonas.find(z => z.id === id)?.nombre ?? 'Zona'; }
   nombreCategoria(id: string) { return this.categorias.find(c => c.id === id)?.nombre ?? 'Servicio'; }
+
   ofertasDe(id: string) { return this.ofertas.filter(o => o.solicitud_id === id); }
 
   guardar() {
@@ -107,7 +111,7 @@ export class SolicitudesPage extends Pantalla implements OnInit {
   }
 
   contratar(o: Oferta) {
-    if (!confirm('¿Elegir esta propuesta para continuar la contratación?')) return;
+    if (!confirm('¿Elegir esta propuesta? Las demás ofertas pendientes de esta solicitud se rechazarán automáticamente.')) return;
     void this.realizar(async () => {
       await this.api.enviar('POST', '/servicios/cotizaciones/' + o.id);
       await this.cargar();

@@ -1,0 +1,31 @@
+
+@if (puedeOrdenar() && ofertas().length > 1) {
+  <label class="campo">Ordenar cotizaciones por
+    <select [ngModel]="orden()" (ngModelChange)="orden.set($event)">
+      <option value="precio">Menor precio</option>
+      <option value="reputacion">Mejor reputación</option>
+      <option value="fecha">Más recientes</option>
+    </select>
+  </label>
+}
+
+@for (oferta of ofertasOrdenadas(); track oferta.id) {
+  <article class="oferta">
+    <strong>{{ oferta.trabajador }}</strong>
+    <p>{{ oferta.monto_estimado_total | currency:oferta.moneda:'symbol':'1.2-2' }} · {{ oferta.estado }}</p>
+    @if (puedeOrdenar()) {
+      <p class="ayuda">
+        @if (oferta.reputacion_promedio != null) {
+          {{ oferta.reputacion_promedio | number:'1.0-2' }} de 5 estrellas ({{ oferta.reputacion_total }} valoraciones)
+        } @else {
+          Sin valoraciones
+        }
+        · Enviada el {{ oferta.enviada_en | date:'dd/MM/yyyy':'-0400' }}
+      </p>
+    }
+    @if (oferta.condiciones) { <p>{{ oferta.condiciones }}</p> }
+    @if (puedeElegir() && oferta.estado === 'enviada') {
+      <button type="button" class="btn" (click)="elegir.emit(oferta)">Elegir propuesta</button>
+    }
+  </article>
+}
