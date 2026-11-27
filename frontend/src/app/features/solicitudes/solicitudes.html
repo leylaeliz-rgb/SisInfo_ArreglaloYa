@@ -62,25 +62,21 @@
 }
 <section class="tarjeta"><h2>{{ auth.rolActivo() === 'trabajador' ? 'Solicitudes disponibles' : 'Mis solicitudes' }}</h2>
 @for (s of solicitudes; track s.id) {
+@let ofertasSolicitud = ofertasDe(s.id);
+@let abierta = s.estado === 'publicada' || s.estado === 'recibiendo_ofertas';
 <article class="item-detalle">
   <div class="fila"><h3>{{ s.titulo }}</h3><span class="estado-cotizacion">{{ s.estado || 'Abierta' }}</span>
     @if (s.urgente) { <span class="estado-cotizacion">Urgente</span> }</div>
   <p>{{ s.descripcion }}</p>
 <app-adjuntos tipo="solicitudes" [recurso]="s.id" [editar]="auth.rolActivo() === 'cliente' && (s.estado === 'publicada' || s.estado === 'recibiendo_ofertas')" /><p class="ayuda">{{ nombreCategoria(s.categoria_id) }} · {{ nombreZona(s.zona_id) }}</p>
   @if (auth.rolActivo() === 'trabajador') { <button class="btn" (click)="seleccionada=s">Preparar cotización</button> }
-  @if (auth.rolActivo() === 'cliente' && (s.estado === 'publicada' || s.estado === 'recibiendo_ofertas')) {
-    <div class="fila">@if (!ofertasDe(s.id).length) { <button class="btn-sec" (click)="editar(s)">Editar</button> }
+  @if (auth.rolActivo() === 'cliente' && abierta) {
+    <div class="fila">@if (!ofertasSolicitud.length) { <button class="btn-sec" (click)="editar(s)">Editar</button> }
       <button class="btn-peligro" (click)="cancelar(s)">Cancelar solicitud</button></div>
   }
-  @for (o of ofertasDe(s.id); track o.id) {
-    <article class="oferta"><strong>{{ o.trabajador }}</strong>
-      <p>{{ o.monto_estimado_total | currency:'BOB':'symbol':'1.2-2' }} · {{ o.estado }}</p>
-      @if (o.condiciones) { <p>{{ o.condiciones }}</p> }
-      @if (auth.rolActivo() === 'cliente' && o.estado === 'enviada' && (s.estado === 'publicada' || s.estado === 'recibiendo_ofertas')) {
-        <button class="btn" (click)="contratar(o)">Elegir propuesta</button>
-      }
-    </article>
-  }
+  <app-comparador-cotizaciones [ofertas]="ofertasSolicitud"
+    [puedeElegir]="auth.rolActivo() === 'cliente' && abierta"
+    [puedeOrdenar]="auth.rolActivo() === 'cliente'" (elegir)="contratar($event)" />
 </article>
 } @empty { <p class="vacio">{{ auth.rolActivo() === 'trabajador' ? 'No hay solicitudes abiertas para mostrar.' : 'Todavía no publicaste solicitudes.' }}</p> }
 </section>
