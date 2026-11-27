@@ -29,9 +29,17 @@ FROM servicios s JOIN solicitudes_servicio q ON q.id=s.solicitud_id JOIN usuario
 LEFT JOIN resumen_financiero_servicio r ON r.servicio_id=s.id
 WHERE (($2='cliente' AND s.cliente_id=$1) OR ($2='trabajador' AND s.trabajador_id=$1)) ORDER BY s.id DESC LIMIT 100`,
   cotizaciones: `SELECT c.id,c.solicitud_id,c.trabajador_id,c.monto_estimado_total,c.estado,c.moneda,c.condiciones,
-s.titulo,s.estado AS estado_solicitud,s.cliente_id,u.nombre_completo AS trabajador
+c.enviada_en,s.titulo,s.estado AS estado_solicitud,s.cliente_id,u.nombre_completo AS trabajador,
+r.promedio AS reputacion_promedio,r.total AS reputacion_total
 FROM cotizaciones c JOIN solicitudes_servicio s ON s.id=c.solicitud_id JOIN usuarios u ON u.id=c.trabajador_id
-WHERE (($2='cliente' AND s.cliente_id=$1) OR ($2='trabajador' AND c.trabajador_id=$1)) ORDER BY c.id DESC LIMIT 100`,
+CROSS JOIN LATERAL (
+  SELECT ROUND(AVG(estrellas),2)::float8 AS promedio,COUNT(*)::int AS total
+  FROM calificaciones_trabajador WHERE trabajador_id=c.trabajador_id AND retirada_en IS NULL
+) r
+WHERE ($2='cliente' AND s.id IN (
+  SELECT id FROM solicitudes_servicio WHERE cliente_id=$1 ORDER BY id DESC LIMIT 100
+)) OR ($2='trabajador' AND c.trabajador_id=$1)
+ORDER BY c.id DESC LIMIT CASE WHEN $2='trabajador' THEN 100 END`,
   trabajadores: `SELECT p.usuario_id AS id,p.descripcion,p.zona_base_id,z.nombre AS zona,u.nombre_completo,
 COALESCE((SELECT json_agg(c.nombre) FROM trabajador_categorias tc JOIN categorias c ON c.id=tc.categoria_id WHERE tc.trabajador_id=p.usuario_id),'[]') AS especialidades
 FROM perfiles_trabajador p JOIN usuarios u ON u.id=p.usuario_id JOIN zonas z ON z.id=p.zona_base_id
